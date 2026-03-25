@@ -1,12 +1,12 @@
 /**
  * Transaction History API Service
- * 
+ *
  * This module provides API functions for fetching transaction history data
  * from the backend audit API and contract events API. It includes:
  * - Query parameter building
  * - Error handling with typed error responses
  * - AbortController support for request cancellation
- * 
+ *
  * Requirements: 1.1, 2.1, 3.3, 4.1, 7.3, 10.1, 10.2, 10.3
  */
 
@@ -36,7 +36,7 @@ const API_BASE_URL =
 
 /**
  * Categorizes an error into a structured ErrorState for UI display
- * 
+ *
  * @param error - The error to categorize
  * @returns Structured error state with type, message, and retryability
  */
@@ -91,19 +91,19 @@ export function categorizeError(error: unknown): ErrorState {
 /**
  * Builds a query string from an object of parameters
  * Filters out undefined and empty string values
- * 
+ *
  * @param params - Object containing query parameters
  * @returns URLSearchParams object ready for use in fetch
  */
 function buildQueryParams(params: Record<string, string | number | undefined>): URLSearchParams {
   const query = new URLSearchParams();
-  
+
   Object.entries(params).forEach(([key, value]) => {
     // Skip undefined and empty string values
     if (value === undefined || value === '') return;
     query.set(key, String(value));
   });
-  
+
   return query;
 }
 
@@ -113,11 +113,11 @@ function buildQueryParams(params: Record<string, string | number | undefined>): 
 
 /**
  * Fetches audit records from the backend audit API
- * 
+ *
  * @param options - Fetch options including pagination and filters
  * @returns Promise resolving to audit API response
  * @throws Error with categorized error state on failure
- * 
+ *
  * Requirements: 1.1, 2.1, 3.3, 10.1, 10.2, 10.3
  */
 export async function fetchAuditRecords(
@@ -145,7 +145,9 @@ export async function fetchAuditRecords(
 
     if (!response.ok) {
       // Create an error object with response info for categorization
-      const error = new Error(`HTTP ${response.status}`) as Error & { response?: { status: number } };
+      const error = new Error(`HTTP ${response.status}`) as Error & {
+        response?: { status: number };
+      };
       error.response = { status: response.status };
       throw error;
     }
@@ -157,7 +159,7 @@ export async function fetchAuditRecords(
     if (error instanceof Error && error.name === 'AbortError') {
       throw error;
     }
-    
+
     // Otherwise, categorize and rethrow
     const categorized = categorizeError(error);
     const enhancedError = new Error(categorized.message) as Error & { errorState?: ErrorState };
@@ -172,11 +174,11 @@ export async function fetchAuditRecords(
 
 /**
  * Fetches contract events for a single contract from the backend API
- * 
+ *
  * @param options - Fetch options including contract ID and pagination
  * @returns Promise resolving to contract events API response
  * @throws Error with categorized error state on failure
- * 
+ *
  * Requirements: 4.1, 10.1, 10.2, 10.3
  */
 export async function fetchContractEvents(
@@ -200,7 +202,9 @@ export async function fetchContractEvents(
 
     if (!response.ok) {
       // Create an error object with response info for categorization
-      const error = new Error(`HTTP ${response.status}`) as Error & { response?: { status: number } };
+      const error = new Error(`HTTP ${response.status}`) as Error & {
+        response?: { status: number };
+      };
       error.response = { status: response.status };
       throw error;
     }
@@ -212,7 +216,7 @@ export async function fetchContractEvents(
     if (error instanceof Error && error.name === 'AbortError') {
       throw error;
     }
-    
+
     // Otherwise, categorize and rethrow
     const categorized = categorizeError(error);
     const enhancedError = new Error(categorized.message) as Error & { errorState?: ErrorState };
@@ -227,7 +231,7 @@ export async function fetchContractEvents(
 
 /**
  * Normalizes an audit record from the backend into a unified TimelineItem
- * 
+ *
  * Normalization rules:
  * - kind: always 'classic'
  * - status: 'confirmed' if successful, 'failed' otherwise
@@ -239,10 +243,10 @@ export async function fetchContractEvents(
  * - txHash: uses tx_hash
  * - label: descriptive label based on status
  * - badge: always 'Classic'
- * 
+ *
  * @param record - Audit record from the backend API
  * @returns Normalized TimelineItem
- * 
+ *
  * Requirements: 4.2, 9.1, 9.2
  */
 export function normalizeAuditRecord(record: AuditRecord): TimelineItem {
@@ -262,7 +266,7 @@ export function normalizeAuditRecord(record: AuditRecord): TimelineItem {
 
 /**
  * Normalizes a contract event from the backend into a unified TimelineItem
- * 
+ *
  * Normalization rules:
  * - kind: always 'contract'
  * - status: always 'indexed' (contract events are indexed after confirmation)
@@ -274,20 +278,20 @@ export function normalizeAuditRecord(record: AuditRecord): TimelineItem {
  * - txHash: uses tx_hash
  * - label: descriptive label based on event_type
  * - badge: always 'Contract Event'
- * 
+ *
  * @param event - Contract event from the backend API
  * @returns Normalized TimelineItem
- * 
+ *
  * Requirements: 4.2, 9.1, 9.2
  */
 export function normalizeContractEvent(event: ContractEvent): TimelineItem {
   // Extract amount and asset from payload with defaults
   const amount = event.payload?.amount || '0';
   const asset = event.payload?.asset_code || 'Unknown';
-  
+
   // Create a human-readable label from event type
   const label = formatEventTypeLabel(event.event_type);
-  
+
   return {
     id: `contract-${event.event_id}`,
     kind: 'contract',
@@ -304,24 +308,24 @@ export function normalizeContractEvent(event: ContractEvent): TimelineItem {
 
 /**
  * Formats an event type string into a human-readable label
- * 
+ *
  * Examples:
  * - 'transfer' → 'Transfer Event'
  * - 'payment' → 'Payment Event'
  * - 'token_mint' → 'Token Mint Event'
- * 
+ *
  * @param eventType - Raw event type string
  * @returns Formatted label
  */
 function formatEventTypeLabel(eventType: string): string {
   if (!eventType) return 'Contract Event';
-  
+
   // Convert snake_case to Title Case and add 'Event' suffix
   const formatted = eventType
     .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
-  
+
   return `${formatted} Event`;
 }
 
@@ -331,10 +335,10 @@ function formatEventTypeLabel(eventType: string): string {
 
 /**
  * Merges and sorts timeline items by timestamp in descending order
- * 
+ *
  * @param items - Array of timeline items to merge and sort
  * @returns Sorted array with most recent items first
- * 
+ *
  * Requirements: 4.2, 4.3
  */
 export function mergeAndSortTimeline(items: TimelineItem[]): TimelineItem[] {
@@ -353,19 +357,19 @@ export function mergeAndSortTimeline(items: TimelineItem[]): TimelineItem[] {
 /**
  * Orchestrates parallel fetching of audit records and contract events,
  * normalizes both result sets, merges them, and returns a unified timeline
- * 
+ *
  * This is the main entry point for fetching transaction history data.
  * It coordinates:
  * 1. Parallel API calls to audit and contract events endpoints
  * 2. Data normalization to unified TimelineItem format
  * 3. Merging and sorting by timestamp descending
  * 4. Calculating pagination metadata (hasMore, total)
- * 
+ *
  * @param options - Fetch options including pagination and filters
  * @param signal - Optional AbortSignal for request cancellation
  * @returns Promise resolving to unified history page result
  * @throws Error with categorized error state on failure
- * 
+ *
  * Requirements: 4.1, 4.2, 4.3
  */
 export async function fetchHistoryPage(
@@ -379,7 +383,7 @@ export async function fetchHistoryPage(
 
   // Initialize contract service to get contract IDs
   await contractService.initialize();
-  
+
   // Get contract IDs for fetching events
   // Using the same contracts as the existing implementation
   const contractIds = [
@@ -425,7 +429,7 @@ export async function fetchHistoryPage(
 
     // Step 2: Normalize both result sets
     const normalizedAuditItems = auditResponse.data.map(normalizeAuditRecord);
-    
+
     const normalizedContractItems: TimelineItem[] = [];
     contractResponses.forEach((response) => {
       if (response && response.success && response.data) {
@@ -442,7 +446,7 @@ export async function fetchHistoryPage(
     // Step 4: Calculate pagination metadata
     // hasMore is based on audit records pagination (primary data source)
     const hasMore = page * limit < auditResponse.total;
-    
+
     // Total is the sum of audit records and contract events
     // Note: This is an approximation since contract events are not paginated the same way
     const contractEventsTotal = contractResponses.reduce((sum, response) => {
@@ -451,7 +455,7 @@ export async function fetchHistoryPage(
       }
       return sum;
     }, 0);
-    
+
     const total = auditResponse.total + contractEventsTotal;
 
     // Return unified result
@@ -465,7 +469,7 @@ export async function fetchHistoryPage(
     if (error instanceof Error && error.name === 'AbortError') {
       throw error;
     }
-    
+
     // Otherwise, categorize and rethrow
     const categorized = categorizeError(error);
     const enhancedError = new Error(categorized.message) as Error & { errorState?: ErrorState };

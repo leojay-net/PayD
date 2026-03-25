@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-base-to-string */
 /**
  * Unit Tests for Transaction History API Service
- * 
+ *
  * Tests the normalization functions and API service layer
  */
 
@@ -276,17 +276,22 @@ describe('normalizeContractEvent', () => {
 describe('fetchAuditRecords', () => {
   test('builds query string with all filter parameters', async () => {
     const { fetchAuditRecords } = await import('../services/transactionHistoryApi');
-    
+
     // Mock fetch to capture the URL
     let capturedUrl = '';
     global.fetch = (url: string | URL | Request) => {
       capturedUrl = typeof url === 'string' ? url : url.toString();
-      return Promise.resolve(new Response(JSON.stringify({
-        data: [],
-        total: 0,
-        page: 1,
-        totalPages: 0,
-      }), { status: 200 }));
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [],
+            total: 0,
+            page: 1,
+            totalPages: 0,
+          }),
+          { status: 200 }
+        )
+      );
     };
 
     await fetchAuditRecords({
@@ -313,16 +318,21 @@ describe('fetchAuditRecords', () => {
 
   test('omits empty filter parameters from query string', async () => {
     const { fetchAuditRecords } = await import('../services/transactionHistoryApi');
-    
+
     let capturedUrl = '';
     global.fetch = (url: string | URL | Request) => {
       capturedUrl = typeof url === 'string' ? url : url.toString();
-      return Promise.resolve(new Response(JSON.stringify({
-        data: [],
-        total: 0,
-        page: 1,
-        totalPages: 0,
-      }), { status: 200 }));
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [],
+            total: 0,
+            page: 1,
+            totalPages: 0,
+          }),
+          { status: 200 }
+        )
+      );
     };
 
     await fetchAuditRecords({
@@ -349,7 +359,7 @@ describe('fetchAuditRecords', () => {
 
   test('handles successful response with data', async () => {
     const { fetchAuditRecords } = await import('../services/transactionHistoryApi');
-    
+
     const mockData = {
       data: [
         {
@@ -380,7 +390,7 @@ describe('fetchAuditRecords', () => {
 
   test('throws network error for fetch failure', async () => {
     const { fetchAuditRecords } = await import('../services/transactionHistoryApi');
-    
+
     global.fetch = async () => {
       throw new TypeError('Failed to fetch');
     };
@@ -392,7 +402,7 @@ describe('fetchAuditRecords', () => {
 
   test('throws client error for 4xx response', async () => {
     const { fetchAuditRecords } = await import('../services/transactionHistoryApi');
-    
+
     global.fetch = async () => {
       return new Response('Bad Request', { status: 400 });
     };
@@ -404,7 +414,7 @@ describe('fetchAuditRecords', () => {
 
   test('throws server error for 5xx response', async () => {
     const { fetchAuditRecords } = await import('../services/transactionHistoryApi');
-    
+
     global.fetch = async () => {
       return new Response('Internal Server Error', { status: 500 });
     };
@@ -416,42 +426,47 @@ describe('fetchAuditRecords', () => {
 
   test('supports request cancellation via AbortController', async () => {
     const { fetchAuditRecords } = await import('../services/transactionHistoryApi');
-    
+
     const abortController = new AbortController();
-    
+
     global.fetch = async (_url: string | URL | Request, options?: RequestInit) => {
       // Simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       // Check if aborted
       if (options?.signal?.aborted) {
         throw new DOMException('The operation was aborted.', 'AbortError');
       }
-      
-      return new Response(JSON.stringify({ data: [], total: 0, page: 1, totalPages: 0 }), { status: 200 });
+
+      return new Response(JSON.stringify({ data: [], total: 0, page: 1, totalPages: 0 }), {
+        status: 200,
+      });
     };
 
     // Abort immediately
     abortController.abort();
 
-    await expect(
-      fetchAuditRecords({ page: 1, limit: 10 }, abortController.signal)
-    ).rejects.toThrow('The operation was aborted.');
+    await expect(fetchAuditRecords({ page: 1, limit: 10 }, abortController.signal)).rejects.toThrow(
+      'The operation was aborted.'
+    );
   });
 });
 
 describe('fetchContractEvents', () => {
   test('builds query string with pagination parameters', async () => {
     const { fetchContractEvents } = await import('../services/transactionHistoryApi');
-    
+
     let capturedUrl = '';
     global.fetch = async (url: string | URL | Request) => {
       capturedUrl = url.toString();
-      return new Response(JSON.stringify({
-        success: true,
-        data: [],
-        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
-      }), { status: 200 });
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: [],
+          pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+        }),
+        { status: 200 }
+      );
     };
 
     await fetchContractEvents({
@@ -467,15 +482,18 @@ describe('fetchContractEvents', () => {
 
   test('includes optional filter parameters when provided', async () => {
     const { fetchContractEvents } = await import('../services/transactionHistoryApi');
-    
+
     let capturedUrl = '';
     global.fetch = async (url: string | URL | Request) => {
       capturedUrl = url.toString();
-      return new Response(JSON.stringify({
-        success: true,
-        data: [],
-        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
-      }), { status: 200 });
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: [],
+          pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+        }),
+        { status: 200 }
+      );
     };
 
     await fetchContractEvents({
@@ -492,7 +510,7 @@ describe('fetchContractEvents', () => {
 
   test('handles successful response with events', async () => {
     const { fetchContractEvents } = await import('../services/transactionHistoryApi');
-    
+
     const mockData = {
       success: true,
       data: [
@@ -526,7 +544,7 @@ describe('fetchContractEvents', () => {
 
   test('throws network error for fetch failure', async () => {
     const { fetchContractEvents } = await import('../services/transactionHistoryApi');
-    
+
     global.fetch = async () => {
       throw new TypeError('Failed to fetch');
     };
@@ -538,7 +556,7 @@ describe('fetchContractEvents', () => {
 
   test('throws client error for 404 response', async () => {
     const { fetchContractEvents } = await import('../services/transactionHistoryApi');
-    
+
     global.fetch = async () => {
       return new Response('Not Found', { status: 404 });
     };
@@ -550,7 +568,7 @@ describe('fetchContractEvents', () => {
 
   test('throws server error for 503 response', async () => {
     const { fetchContractEvents } = await import('../services/transactionHistoryApi');
-    
+
     global.fetch = async () => {
       return new Response('Service Unavailable', { status: 503 });
     };
@@ -562,20 +580,23 @@ describe('fetchContractEvents', () => {
 
   test('supports request cancellation via AbortController', async () => {
     const { fetchContractEvents } = await import('../services/transactionHistoryApi');
-    
+
     const abortController = new AbortController();
-    
+
     global.fetch = async (_url: string | URL | Request, options?: RequestInit) => {
       // Check if aborted
       if (options?.signal?.aborted) {
         throw new DOMException('The operation was aborted.', 'AbortError');
       }
-      
-      return new Response(JSON.stringify({
-        success: true,
-        data: [],
-        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
-      }), { status: 200 });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: [],
+          pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+        }),
+        { status: 200 }
+      );
     };
 
     // Abort immediately
@@ -590,7 +611,7 @@ describe('fetchContractEvents', () => {
 describe('categorizeError', () => {
   test('categorizes TypeError as network error', async () => {
     const { categorizeError } = await import('../services/transactionHistoryApi');
-    
+
     const error = new TypeError('Failed to fetch');
     const result = categorizeError(error);
 
@@ -601,7 +622,7 @@ describe('categorizeError', () => {
 
   test('categorizes 400 error as client error', async () => {
     const { categorizeError } = await import('../services/transactionHistoryApi');
-    
+
     const error = { response: { status: 400 } };
     const result = categorizeError(error);
 
@@ -612,7 +633,7 @@ describe('categorizeError', () => {
 
   test('categorizes 404 error as client error', async () => {
     const { categorizeError } = await import('../services/transactionHistoryApi');
-    
+
     const error = { response: { status: 404 } };
     const result = categorizeError(error);
 
@@ -623,7 +644,7 @@ describe('categorizeError', () => {
 
   test('categorizes 500 error as server error', async () => {
     const { categorizeError } = await import('../services/transactionHistoryApi');
-    
+
     const error = { response: { status: 500 } };
     const result = categorizeError(error);
 
@@ -634,7 +655,7 @@ describe('categorizeError', () => {
 
   test('categorizes 503 error as server error', async () => {
     const { categorizeError } = await import('../services/transactionHistoryApi');
-    
+
     const error = { response: { status: 503 } };
     const result = categorizeError(error);
 
@@ -645,7 +666,7 @@ describe('categorizeError', () => {
 
   test('categorizes unknown error as validation error', async () => {
     const { categorizeError } = await import('../services/transactionHistoryApi');
-    
+
     const error = new Error('Something went wrong');
     const result = categorizeError(error);
 
@@ -661,7 +682,7 @@ describe('categorizeError', () => {
 describe('mergeAndSortTimeline', () => {
   test('sorts timeline items by timestamp in descending order', async () => {
     const { mergeAndSortTimeline } = await import('../services/transactionHistoryApi');
-    
+
     const items = [
       {
         id: '1',
@@ -711,14 +732,14 @@ describe('mergeAndSortTimeline', () => {
 
   test('handles empty array', async () => {
     const { mergeAndSortTimeline } = await import('../services/transactionHistoryApi');
-    
+
     const result = mergeAndSortTimeline([]);
     expect(result).toEqual([]);
   });
 
   test('handles single item', async () => {
     const { mergeAndSortTimeline } = await import('../services/transactionHistoryApi');
-    
+
     const items = [
       {
         id: '1',
@@ -740,7 +761,7 @@ describe('mergeAndSortTimeline', () => {
 
   test('preserves all items during sort', async () => {
     const { mergeAndSortTimeline } = await import('../services/transactionHistoryApi');
-    
+
     const items = [
       {
         id: '1',
@@ -770,6 +791,6 @@ describe('mergeAndSortTimeline', () => {
 
     const result = mergeAndSortTimeline(items);
     expect(result.length).toBe(2);
-    expect(result.map(item => item.id).sort()).toEqual(['1', '2']);
+    expect(result.map((item) => item.id).sort()).toEqual(['1', '2']);
   });
 });

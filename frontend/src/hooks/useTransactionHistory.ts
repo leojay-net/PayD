@@ -7,7 +7,7 @@ import type {
 
 /**
  * Custom hook for fetching and managing transaction history data with pagination.
- * 
+ *
  * This hook uses TanStack Query's useInfiniteQuery to:
  * - Fetch transaction history data from the backend
  * - Cache results for 30 seconds (staleTime)
@@ -15,13 +15,13 @@ import type {
  * - Handle errors with retry capability (1 automatic retry)
  * - Cancel in-flight requests on unmount
  * - Deduplicate concurrent requests with identical parameters
- * 
+ *
  * The query key includes all filter parameters to ensure proper cache invalidation
  * when filters change.
- * 
+ *
  * @param options - Options including filters, page, and limit
  * @returns Transaction history data, loading states, error state, and pagination functions
- * 
+ *
  * @example
  * ```tsx
  * const { data, isLoading, error, hasMore, fetchNextPage, retry } = useTransactionHistory({
@@ -29,17 +29,17 @@ import type {
  *   page: 1,
  *   limit: 20,
  * });
- * 
+ *
  * // Display data
  * {data?.map(item => <TimelineItem key={item.id} item={item} />)}
- * 
+ *
  * // Load more button
  * <button onClick={fetchNextPage} disabled={!hasMore}>Load More</button>
- * 
+ *
  * // Retry on error
  * {error && <button onClick={retry}>Retry</button>}
  * ```
- * 
+ *
  * Requirements: 1.1, 2.1, 7.2
  */
 export function useTransactionHistory(

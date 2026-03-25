@@ -56,11 +56,11 @@ This implementation plan converts the feature design into actionable coding task
     - **Property 3: Pagination Parameters**
     - **Validates: Requirements 2.1**
   
-  - [~] 3.6 Write property test for filter parameters in request
+  - [ ] 3.6 Write property test for filter parameters in request
     - **Property 8: Filter Parameters in Request**
     - **Validates: Requirements 3.3, 3.4, 3.5, 3.6, 3.7**
   
-  - [~] 3.7 Write property test for multiple filters combined
+  - [ ] 3.7 Write property test for multiple filters combined
     - **Property 9: Multiple Filters Combined**
     - **Validates: Requirements 3.8**
 
@@ -72,15 +72,15 @@ This implementation plan converts the feature design into actionable coding task
     - Return sorted array
     - _Requirements: 4.2, 4.3_
   
-  - [~] 4.2 Write property test for timeline merging and sorting
+  - [ ] 4.2 Write property test for timeline merging and sorting
     - **Property 11: Timeline Merging and Sorting**
     - **Validates: Requirements 4.2, 4.3**
   
-  - [~] 4.3 Write property test for dual API calls
+  - [ ] 4.3 Write property test for dual API calls
     - **Property 10: Dual API Calls**
     - **Validates: Requirements 4.1**
 
-- [~] 5. Checkpoint - Ensure API layer tests pass
+- [ ] 5. Checkpoint - Ensure API layer tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 6. Implement filter state management hook
@@ -102,30 +102,30 @@ This implementation plan converts the feature design into actionable coding task
     - Properly encode special characters in URL
     - _Requirements: 8.1, 8.4_
   
-  - [~] 6.4 Write unit tests for useFilterState
+  - [ ] 6.4 Write unit tests for useFilterState
     - Test initial state from URL parameters
     - Test filter updates and debouncing
     - Test URL synchronization
     - Test resetFilters functionality
     - _Requirements: 3.1, 8.1, 8.2, 8.3_
   
-  - [~] 6.5 Write property test for filter debouncing
+  - [ ] 6.5 Write property test for filter debouncing
     - **Property 6: Filter Debouncing**
     - **Validates: Requirements 3.1, 7.1**
   
-  - [~] 6.6 Write property test for URL synchronization
+  - [ ] 6.6 Write property test for URL synchronization
     - **Property 17: URL Synchronization**
     - **Validates: Requirements 8.1**
   
-  - [~] 6.7 Write property test for URL hydration
+  - [ ] 6.7 Write property test for URL hydration
     - **Property 18: URL Hydration**
     - **Validates: Requirements 8.2**
   
-  - [~] 6.8 Write property test for URL encoding
+  - [ ] 6.8 Write property test for URL encoding
     - **Property 20: URL Encoding**
     - **Validates: Requirements 8.4**
   
-  - [~] 6.9 Write property test for history navigation
+  - [ ] 6.9 Write property test for history navigation
     - **Property 19: History Navigation State Restoration**
     - **Validates: Requirements 8.3**
 
@@ -156,34 +156,34 @@ This implementation plan converts the feature design into actionable coding task
     - Ensure cleanup on unmount cancels in-flight requests
     - _Requirements: 7.3_
   
-  - [~] 7.5 Write unit tests for useTransactionHistory
+  - [ ] 7.5 Write unit tests for useTransactionHistory
     - Test initial data fetch with mock API
     - Test pagination with fetchNextPage
     - Test error states and retry functionality
     - Test request cancellation on unmount
     - _Requirements: 1.1, 1.3, 2.2, 7.3, 10.4, 10.5_
   
-  - [~] 7.6 Write property test for pagination reset on filter change
+  - [ ] 7.6 Write property test for pagination reset on filter change
     - **Property 7: Pagination Reset on Filter Change**
     - **Validates: Requirements 3.2**
   
-  - [~] 7.7 Write property test for data accumulation
+  - [ ] 7.7 Write property test for data accumulation
     - **Property 5: Data Accumulation**
     - **Validates: Requirements 2.5**
   
-  - [~] 7.8 Write property test for cache hit on repeated query
+  - [ ] 7.8 Write property test for cache hit on repeated query
     - **Property 14: Cache Hit on Repeated Query**
     - **Validates: Requirements 7.2**
   
-  - [~] 7.9 Write property test for request cancellation
+  - [ ] 7.9 Write property test for request cancellation
     - **Property 15: Request Cancellation on Unmount**
     - **Validates: Requirements 7.3**
   
-  - [~] 7.10 Write property test for request deduplication
+  - [ ] 7.10 Write property test for request deduplication
     - **Property 16: Request Deduplication**
     - **Validates: Requirements 7.4**
 
-- [~] 8. Checkpoint - Ensure hooks tests pass
+- [ ] 8. Checkpoint - Ensure hooks tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 9. Update TransactionHistory component
@@ -229,7 +229,7 @@ This implementation plan converts the feature design into actionable coding task
     - Show loading state on button when isLoadingMore is true
     - _Requirements: 2.2, 2.3_
   
-  - [~] 9.8 Write integration tests for component
+  - [ ] 9.8 Write integration tests for component
     - Test component mounts and fetches data
     - Test filter changes trigger refetch
     - Test load more button pagination
@@ -238,145 +238,145 @@ This implementation plan converts the feature design into actionable coding task
     - _Requirements: 1.1, 1.2, 2.2, 3.1, 6.1, 10.4_
 
 - [ ] 10. Implement timeline item rendering
-  - [~] 10.1 Update TimelineItem component for contract events
+  - [ ] 10.1 Update TimelineItem component for contract events
     - Add badge display logic (Classic vs Contract Event)
     - Ensure contract events show distinct visual badge
     - _Requirements: 4.4_
   
-  - [~] 10.2 Implement amount formatting
+  - [ ] 10.2 Implement amount formatting
     - Format amounts according to asset decimal precision
     - Handle different asset types (USDC, XLM, EURC)
     - _Requirements: 9.3_
   
-  - [~] 10.3 Implement timestamp localization
+  - [ ] 10.3 Implement timestamp localization
     - Format timestamps in user's local timezone
     - Use consistent date/time format across all items
     - _Requirements: 9.4_
   
-  - [~] 10.4 Implement status visual indicators
+  - [ ] 10.4 Implement status visual indicators
     - Display appropriate indicator for confirmed status
     - Display appropriate indicator for pending status
     - Display appropriate indicator for failed status
     - Display appropriate indicator for indexed status (contract events)
     - _Requirements: 9.5_
   
-  - [~] 10.5 Write property test for contract event badge
+  - [ ] 10.5 Write property test for contract event badge
     - **Property 12: Contract Event Badge Differentiation**
     - **Validates: Requirements 4.4**
   
-  - [~] 10.6 Write property test for amount formatting
+  - [ ] 10.6 Write property test for amount formatting
     - **Property 22: Amount Formatting**
     - **Validates: Requirements 9.3**
   
-  - [~] 10.7 Write property test for timestamp localization
+  - [ ] 10.7 Write property test for timestamp localization
     - **Property 23: Timestamp Localization**
     - **Validates: Requirements 9.4**
   
-  - [~] 10.8 Write property test for status visual indicators
+  - [ ] 10.8 Write property test for status visual indicators
     - **Property 24: Status Visual Indicators**
     - **Validates: Requirements 9.5**
 
 - [ ] 11. Implement error handling UI components
-  - [~] 11.1 Create or update ErrorDisplay component
+  - [ ] 11.1 Create or update ErrorDisplay component
     - Accept error state and onRetry callback
     - Display error message based on error type
     - Show retry button for retryable errors
     - Style appropriately for different error types
     - _Requirements: 10.1, 10.2, 10.3, 10.4_
   
-  - [~] 11.2 Write property test for error state display
+  - [ ] 11.2 Write property test for error state display
     - **Property 2: Error State Display**
     - **Validates: Requirements 1.3, 10.1, 10.2, 10.3**
   
-  - [~] 11.3 Write property test for retry availability
+  - [ ] 11.3 Write property test for retry availability
     - **Property 25: Retry Availability**
     - **Validates: Requirements 10.4**
   
-  - [~] 11.4 Write property test for retry execution
+  - [ ] 11.4 Write property test for retry execution
     - **Property 26: Retry Execution**
     - **Validates: Requirements 10.5**
 
-- [~] 12. Checkpoint - Ensure component integration tests pass
+- [ ] 12. Checkpoint - Ensure component integration tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 13. UI polish and refinements
-  - [~] 13.1 Refine loading skeleton
+  - [ ] 13.1 Refine loading skeleton
     - Match skeleton layout to actual timeline item structure
     - Add appropriate animation
     - _Requirements: 5.4_
   
-  - [~] 13.2 Improve empty state messaging
+  - [ ] 13.2 Improve empty state messaging
     - Add helpful icons or illustrations
     - Provide clear guidance on next actions
     - _Requirements: 6.3_
   
-  - [~] 13.3 Enhance filter panel UX
+  - [ ] 13.3 Enhance filter panel UX
     - Add clear visual feedback for active filters
     - Show filter count badge
     - Improve filter input accessibility
     - _Requirements: 3.1, 3.2_
   
-  - [~] 13.4 Add loading indicator for pagination
+  - [ ] 13.4 Add loading indicator for pagination
     - Display spinner or progress indicator at bottom
     - Ensure smooth transition when new data loads
     - _Requirements: 5.2_
   
-  - [~] 13.5 Test responsive behavior
+  - [ ] 13.5 Test responsive behavior
     - Verify layout works on mobile, tablet, desktop
     - Ensure filters are accessible on small screens
     - Test timeline rendering on various screen sizes
     - _Requirements: All_
 
 - [ ] 14. Write remaining property-based tests
-  - [~] 14.1 Write property test for API data display
+  - [ ] 14.1 Write property test for API data display
     - **Property 1: API Data Display**
     - **Validates: Requirements 1.2**
   
-  - [~] 14.2 Write property test for page increment
+  - [ ] 14.2 Write property test for page increment
     - **Property 4: Page Increment on Load More**
     - **Validates: Requirements 2.2**
   
-  - [~] 14.3 Write property test for loading state visibility
+  - [ ] 14.3 Write property test for loading state visibility
     - **Property 13: Loading State Visibility**
     - **Validates: Requirements 5.1, 5.2, 5.3**
 
 - [ ] 15. Performance optimization and verification
-  - [~] 15.1 Verify TanStack Query caching
+  - [ ] 15.1 Verify TanStack Query caching
     - Test that identical queries use cached data
     - Verify staleTime configuration (30 seconds)
     - Check cache invalidation on filter changes
     - _Requirements: 7.2_
   
-  - [~] 15.2 Verify request deduplication
+  - [ ] 15.2 Verify request deduplication
     - Test that concurrent identical requests only make one API call
     - Verify TanStack Query deduplication is working
     - _Requirements: 7.4_
   
-  - [~] 15.3 Verify debouncing reduces API calls
+  - [ ] 15.3 Verify debouncing reduces API calls
     - Test that rapid filter changes only trigger one API call
     - Verify 300ms debounce delay is working
     - _Requirements: 3.1, 7.1_
   
-  - [~] 15.4 Profile component rendering performance
+  - [ ] 15.4 Profile component rendering performance
     - Use React DevTools Profiler to identify unnecessary re-renders
     - Add useMemo for expensive computations if needed
     - Add useCallback for event handlers if needed
     - _Requirements: All_
   
-  - [~] 15.5 Write performance tests
+  - [ ] 15.5 Write performance tests
     - Test that filter changes are debounced
     - Test that cache hits don't trigger API calls
     - Test that request deduplication works
     - _Requirements: 7.1, 7.2, 7.4_
 
 - [ ] 16. Final checkpoint and validation
-  - [~] 16.1 Run all tests and ensure they pass
+  - [ ] 16.1 Run all tests and ensure they pass
     - Run unit tests: `npm test`
     - Run property-based tests
     - Verify all 26 properties are tested
     - _Requirements: All_
   
-  - [~] 16.2 Manual testing checklist
+  - [ ] 16.2 Manual testing checklist
     - Test initial page load with no filters
     - Test each filter type individually
     - Test multiple filters combined
@@ -388,13 +388,13 @@ This implementation plan converts the feature design into actionable coding task
     - Test URL bookmarking and sharing
     - _Requirements: All_
   
-  - [~] 16.3 Verify all requirements are met
+  - [ ] 16.3 Verify all requirements are met
     - Review requirements document
     - Confirm each acceptance criterion is satisfied
     - Document any deviations or limitations
     - _Requirements: All_
 
-- [~] 17. Final checkpoint - Ensure all tests pass
+- [ ] 17. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

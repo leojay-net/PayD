@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/require-await */
 /**
  * Integration Tests for TransactionHistory Component
- * 
+ *
  * These tests verify the complete integration of:
  * - TransactionHistory component
  * - useFilterState hook
@@ -54,9 +54,7 @@ function renderWithProviders(ui: React.ReactElement) {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        {ui}
-      </BrowserRouter>
+      <BrowserRouter>{ui}</BrowserRouter>
     </QueryClientProvider>
   );
 }
@@ -128,19 +126,26 @@ describe('TransactionHistory Integration', () => {
   test('displays loading skeleton during initial load', async () => {
     // Mock delayed API response
     vi.spyOn(transactionHistoryApi, 'fetchHistoryPage').mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({
-        items: [],
-        hasMore: false,
-        total: 0,
-      }), 100))
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                items: [],
+                hasMore: false,
+                total: 0,
+              }),
+            100
+          )
+        )
     );
 
     renderWithProviders(<TransactionHistory />);
 
     // Verify loading skeleton is displayed
-    const skeletons = screen.getAllByRole('generic').filter(
-      el => el.className.includes('animate-pulse')
-    );
+    const skeletons = screen
+      .getAllByRole('generic')
+      .filter((el) => el.className.includes('animate-pulse'));
     expect(skeletons.length).toBeGreaterThan(0);
   });
 

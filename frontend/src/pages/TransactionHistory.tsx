@@ -232,7 +232,9 @@ export default function TransactionHistory() {
         <div className="p-6">
           {error ? (
             <div className="text-sm text-danger mb-4 font-medium px-4 py-3 bg-danger/10 border border-danger/20 rounded-lg flex items-center justify-between">
-              <span>{error instanceof Error ? error.message : 'Failed to load transaction history'}</span>
+              <span>
+                {error instanceof Error ? error.message : 'Failed to load transaction history'}
+              </span>
               <button
                 onClick={() => retry()}
                 className="ml-4 px-3 py-1 text-xs font-bold bg-danger/20 hover:bg-danger/30 rounded transition-colors"
