@@ -1,5 +1,6 @@
 import { StellarService } from './stellarService.js';
 import { pool } from '../config/database.js';
+import { emitTransactionUpdate } from './socketService.js';
 
 export interface AuditRecord {
   id: number;
@@ -54,7 +55,15 @@ export class TransactionAuditService {
       ]
     );
 
-    return result.rows[0];
+    const record: AuditRecord = result.rows[0];
+
+    // Notify any WebSocket subscribers watching this transaction hash.
+    emitTransactionUpdate(record.tx_hash, record.successful ? 'confirmed' : 'failed', {
+      ledger: record.ledger_sequence,
+      sourceAccount: record.source_account,
+    });
+
+    return record;
   }
 
   /**

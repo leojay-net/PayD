@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, Calendar, Filter, Search, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,10 @@ import {
   type HistoryFilters,
   type TimelineItem,
 } from '../services/transactionHistory';
+import { useSocket } from '../hooks/useSocket';
+import { ConnectionStatus } from '../components/ConnectionStatus';
+
+const POLLING_INTERVAL_MS = 15_000;
 
 const DEFAULT_FILTERS: HistoryFilters = {
   search: '',
@@ -43,6 +47,8 @@ function TimelineSkeleton() {
 
 export default function TransactionHistory() {
   useTranslation();
+  const { socket, connected, isPollingFallback } = useSocket();
+
   const [filters, setFilters] = useState<HistoryFilters>(DEFAULT_FILTERS);
   const [debouncedFilters, setDebouncedFilters] = useState<HistoryFilters>(DEFAULT_FILTERS);
   const [items, setItems] = useState<TimelineItem[]>([]);
@@ -52,6 +58,7 @@ export default function TransactionHistory() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -64,29 +71,74 @@ export default function TransactionHistory() {
     };
   }, [filters]);
 
+  const loadFirstPage = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await fetchHistoryPage({
+        page: 1,
+        limit: 20,
+        filters: debouncedFilters,
+      });
+      setItems(result.items);
+      setHasMore(result.hasMore);
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error ? loadError.message : 'Failed to load transaction history'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [debouncedFilters]);
+
   useEffect(() => {
-    const load = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const result = await fetchHistoryPage({
-          page: 1,
-          limit: 20,
-          filters: debouncedFilters,
-        });
-        setItems(result.items);
-        setHasMore(result.hasMore);
-      } catch (loadError) {
-        setError(
-          loadError instanceof Error ? loadError.message : 'Failed to load transaction history'
-        );
-      } finally {
-        setIsLoading(false);
-      }
+    void loadFirstPage();
+  }, [loadFirstPage]);
+
+  // ── WebSocket: atomically update a single item status in-place ─────────
+  useEffect(() => {
+    if (!socket) return;
+
+    const onTransactionUpdate = (payload: {
+      transactionId: string;
+      status: string;
+      timestamp: string;
+    }) => {
+      setItems((prev: TimelineItem[]) =>
+        prev.map((item: TimelineItem) =>
+          item.txHash === payload.transactionId ? { ...item, status: payload.status } : item
+        )
+      );
     };
 
-    void load();
-  }, [debouncedFilters]);
+    socket.on('transaction:update', onTransactionUpdate);
+    return () => {
+      socket.off('transaction:update', onTransactionUpdate);
+    };
+  }, [socket]);
+
+  // ── Polling fallback: refresh the first page when socket is down ───────
+  useEffect(() => {
+    const shouldPoll = !connected || isPollingFallback;
+
+    if (shouldPoll) {
+      pollingRef.current = setInterval(() => {
+        void loadFirstPage();
+      }, POLLING_INTERVAL_MS);
+    } else {
+      if (pollingRef.current !== null) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    }
+
+    return () => {
+      if (pollingRef.current !== null) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [connected, isPollingFallback, loadFirstPage]);
 
   const activeFilterCount = useMemo(
     () => (Object.values(filters) as string[]).filter((value) => value.trim().length > 0).length,
@@ -128,6 +180,7 @@ export default function TransactionHistory() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <ConnectionStatus />
           <Link
             to="/help?q=failed+transaction"
             className="text-xs text-muted hover:text-accent underline transition"

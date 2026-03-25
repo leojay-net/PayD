@@ -8,6 +8,7 @@ import { emitBulkUpdate } from '../services/socketService.js';
 import taxService from '../services/taxService.js';
 import logger from '../utils/logger.js';
 import { Keypair, Asset, Operation, TransactionBuilder } from '@stellar/stellar-sdk';
+import { getAssetIssuer } from '../config/assets.js';
 
 /**
  * Worker to process payroll runs in the background.
@@ -41,8 +42,11 @@ export const payrollWorker = new Worker<PayrollJobData>(
 
             const distributionKeypair = Keypair.fromSecret(distributionSecret);
             const assetCode = payroll_run.asset_code;
-            // In a real app, you'd get the issuer from the DB or config based on organization
-            const assetIssuer = process.env.ORGUSD_ISSUER_PUBLIC;
+
+            // Resolve the issuer from the centralized asset registry.
+            // For XLM (native) no issuer is needed; for any stablecoin (USDC,
+            // EURC, ORGUSD, …) the registry provides the correct address.
+            const assetIssuer = assetCode !== 'XLM' ? getAssetIssuer(assetCode) : null;
 
             const asset = assetCode === 'XLM'
                 ? Asset.native()
