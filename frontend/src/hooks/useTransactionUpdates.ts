@@ -24,8 +24,13 @@ export interface TransactionLiveStatus {
  *   audit API every {@link POLLING_INTERVAL_MS} ms for a fresh status.
  */
 export function useTransactionUpdates(txHash: string | null | undefined): TransactionLiveStatus {
-  const { socket, connected, isPollingFallback, subscribeToTransaction, unsubscribeFromTransaction } =
-    useSocket();
+  const {
+    socket,
+    connected,
+    isPollingFallback,
+    subscribeToTransaction,
+    unsubscribeFromTransaction,
+  } = useSocket();
 
   const [status, setStatus] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
