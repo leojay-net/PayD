@@ -25,6 +25,8 @@ import assetRoutes from './routes/assetRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import searchRoutes from './routes/searchRoutes.js';
 import contractRoutes from './routes/contractRoutes.js';
+import ratesRoutes from './routes/ratesRoutes.js';
+import { dataRateLimit } from './middlewares/rateLimitMiddleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,6 +62,8 @@ fs.writeFileSync(
 
 // Middleware for versioning
 app.use(apiVersionMiddleware);
+
+app.use('/rates', dataRateLimit(), ratesRoutes);
 
 // Feature / PR specific routes
 app.use('/auth', authRoutes);
