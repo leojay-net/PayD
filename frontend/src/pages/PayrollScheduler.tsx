@@ -23,6 +23,7 @@ import { ContractErrorPanel } from '../components/ContractErrorPanel';
 import { IssuerMultisigBanner } from '../components/IssuerMultisigBanner';
 import { HelpLink } from '../components/HelpLink';
 import { parseContractError, type ContractErrorDetail } from '../utils/contractErrorParser';
+import { formatDate } from '../utils/dateHelpers';
 
 interface PayrollFormState {
   employeeName: string;
@@ -120,25 +121,6 @@ function computeNextRunDate(config: SchedulingConfig, from: Date = new Date()): 
   return first;
 }
 
-const formatDate = (dateString: string) => {
-  if (!dateString) return 'N/A';
-
-  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
-  const date = dateOnlyMatch
-    ? new Date(
-        Number.parseInt(dateOnlyMatch[1], 10),
-        Number.parseInt(dateOnlyMatch[2], 10) - 1,
-        Number.parseInt(dateOnlyMatch[3], 10)
-      )
-    : new Date(dateString);
-
-  if (isNaN(date.getTime())) return dateString;
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-};
 
 interface PendingClaim {
   id: string;
