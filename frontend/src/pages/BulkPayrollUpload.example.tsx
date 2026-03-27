@@ -16,6 +16,9 @@ import { Button, Card } from '@stellar/design-system';
 import { useNotification } from '../hooks/useNotification';
 import { useWallet } from '../hooks/useWallet';
 
+// Type declaration for gtag (from Google Analytics)
+declare const gtag: ((command: string, action: string, data?: Record<string, any>) => void) | undefined;
+
 const REQUIRED_COLUMNS = ['name', 'wallet_address', 'amount', 'currency'];
 
 /**
@@ -244,7 +247,7 @@ export default function BulkPayrollUpload() {
             {/* Action Buttons */}
             <div className="flex gap-3">
               {invalidRows.length > 0 && (
-                <Button variant="secondary" disabled>
+                <Button variant="secondary" size="lg" disabled>
                   {invalidRows.length} Errors - Fix before continuing
                 </Button>
               )}
