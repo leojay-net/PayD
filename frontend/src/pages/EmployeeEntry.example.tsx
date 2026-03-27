@@ -10,7 +10,10 @@
  * - Error handling and user notifications
  * - Loading states during removal
  * - i18n support
+ *
+ * eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
  */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 
 import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -79,10 +82,7 @@ export const EmployeeEntry: React.FC = () => {
   const handleRemoveEmployee = useCallback((employeeId: string) => {
     const employee = employees.find((e) => e.id === employeeId);
     if (!employee) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      const notifyErrorFn = notifyError as (message: string) => void;
-      const errorMsg = t('errors.employeeNotFound', 'Employee not found');
-      notifyErrorFn(errorMsg);
+      notifyError(t('errors.employeeNotFound', 'Employee not found'));
       return;
     }
 
@@ -131,12 +131,11 @@ export const EmployeeEntry: React.FC = () => {
         });
 
         // Show success notification
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const notifySuccessFn = notifySuccess as (message: string) => void;
-        const successMsg = t('notifications.employeeRemoved', 'Employee {name} has been removed', {
-          name: employee.name,
-        });
-        notifySuccessFn(successMsg);
+        notifySuccess(
+          t('notifications.employeeRemoved', 'Employee {name} has been removed', {
+            name: employee.name,
+          })
+        );
 
         // Track successful removal
         gtag('event', 'employee_removed', {
@@ -147,12 +146,11 @@ export const EmployeeEntry: React.FC = () => {
       } catch (error) {
         const employeeError = error as Record<string, unknown>;
         const msg = (employeeError?.message as string) || 'Unknown error';
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const notifyErrorFn = notifyError as (message: string) => void;
-        const errorMsg = t('errors.employeeRemovalFailed', 'Failed to remove employee: {error}', {
-          error: msg,
-        });
-        notifyErrorFn(errorMsg);
+        notifyError(
+          t('errors.employeeRemovalFailed', 'Failed to remove employee: {error}', {
+            error: msg,
+          })
+        );
 
         // Track removal failure
         gtag('event', 'employee_removal_failed', {
@@ -217,12 +215,11 @@ export const EmployeeEntry: React.FC = () => {
         employee_name: employee.name,
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const notifySuccessFn = notifySuccess as (message: string) => void;
-      const addMsg = t('notifications.employeeAdded', 'Employee {name} has been added', {
-        name: newEmployee.name,
-      });
-      notifySuccessFn(addMsg);
+      notifySuccess(
+        t('notifications.employeeAdded', 'Employee {name} has been added', {
+          name: newEmployee.name,
+        })
+      );
     },
     [t, gtag]
   );
