@@ -167,6 +167,8 @@ For cloud hosting instructions, see the deployment guide:
 
 - [Vercel + Render Deployment Guide](docs/DEPLOYMENT_GUIDE_VERCEL_RENDER.md)
 - [Staging Environment Known Issues](docs/STAGING_ISSUES.md)
+- [Local Contract Bootstrap](docs/LOCAL_CONTRACT_BOOTSTRAP.md)
+- [Filenaming Conventions](docs/FILENAMING_CONVENTIONS.md)
 
 ## Getting Started
 
@@ -249,6 +251,18 @@ Run tests:
 ```bash
 npm run test
 ```
+
+### Local Soroban Contracts
+
+If you want to build, deploy, and seed the local Soroban contracts in one pass,
+use the bootstrap helper:
+
+```bash
+python3 scripts/local_contract_bootstrap.py --dry-run
+```
+
+The script lives in [docs/LOCAL_CONTRACT_BOOTSTRAP.md](docs/LOCAL_CONTRACT_BOOTSTRAP.md)
+and can be run with `--contract` flags to limit the scope.
 
 ## 🙌 Contributors
 
