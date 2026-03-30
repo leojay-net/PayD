@@ -14,6 +14,9 @@ import { WalletContext } from '../hooks/useWallet';
 
 const LAST_WALLET_STORAGE_KEY = 'payd:last_wallet_name';
 const SUPPORTED_MODAL_WALLETS = [FREIGHTER_ID, LOBSTR_ID] as const;
+const WALLET_CONNECTION_TIMEOUT_MS = 15000;
+const WALLET_CONNECTION_TIMEOUT_MESSAGE =
+  'Wallet connection timed out after 15 seconds. Confirm the request in your wallet and try again.';
 
 type SelectableWallet = {
   id: string;
@@ -21,6 +24,25 @@ type SelectableWallet = {
   icon?: string;
   isAvailable: boolean;
 };
+
+function withWalletConnectionTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = window.setTimeout(() => {
+      reject(new Error(WALLET_CONNECTION_TIMEOUT_MESSAGE));
+    }, timeoutMs);
+
+    promise.then(
+      (value) => {
+        window.clearTimeout(timeoutId);
+        resolve(value);
+      },
+      (error: unknown) => {
+        window.clearTimeout(timeoutId);
+        reject(error instanceof Error ? error : new Error(String(error)));
+      }
+    );
+  });
+}
 
 function hasAnyWalletExtension(): boolean {
   if (typeof window === 'undefined') return true;
@@ -34,7 +56,10 @@ function hasAnyWalletExtension(): boolean {
   return Boolean(extendedWindow.freighterApi || extendedWindow.xBullSDK || extendedWindow.lobstr);
 }
 
-export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const WalletProvider: React.FC<{
+  children: React.ReactNode;
+  connectionTimeoutMs?: number;
+}> = ({ children, connectionTimeoutMs = WALLET_CONNECTION_TIMEOUT_MS }) => {
   const [address, setAddress] = useState<string | null>(null);
   const [walletName, setWalletName] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -43,6 +68,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [network, setNetwork] = useState<'TESTNET' | 'PUBLIC'>('TESTNET');
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [walletOptions, setWalletOptions] = useState<SelectableWallet[]>([]);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const kitRef = useRef<StellarWalletsKit | null>(null);
   const { t } = useTranslation();
   const { notifyWalletEvent } = useNotification();
@@ -68,7 +94,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       try {
         newKit.setWallet(lastWalletName);
-        const account = await newKit.getAddress();
+        const account = await withWalletConnectionTimeout(newKit.getAddress(), connectionTimeoutMs);
         if (account?.address) {
           setAddress(account.address);
           notifyWalletEvent(
@@ -85,7 +111,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     void attemptSilentReconnect();
-  }, [notifyWalletEvent, network]);
+  }, [connectionTimeoutMs, notifyWalletEvent, network]);
 
   const loadWalletOptions = async (): Promise<SelectableWallet[]> => {
     const kit = kitRef.current;
@@ -110,20 +136,17 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const kit = kitRef.current;
     if (!kit) return null;
 
+    setConnectionError(null);
     setIsConnecting(true);
     try {
       kit.setWallet(selectedWalletId);
-
-      const { address } = await Promise.race([
-        kit.getAddress(),
-        new Promise<{ address: string }>((_, reject) =>
-          setTimeout(() => reject(new Error('Connection timed out after 15 seconds.')), 15000)
-        ),
-      ]);
+      const { address } = await withWalletConnectionTimeout(kit.getAddress(), connectionTimeoutMs);
 
       setAddress(address);
       setWalletName(selectedWalletId);
       localStorage.setItem(LAST_WALLET_STORAGE_KEY, selectedWalletId);
+      setConnectionError(null);
+      setWalletModalOpen(false);
       notifyWalletEvent(
         'connected',
         `${address.slice(0, 6)}...${address.slice(-4)} via ${selectedWalletId}`
@@ -131,14 +154,16 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return address;
     } catch (error) {
       console.error('Failed to connect wallet:', error);
+      const message =
+        error instanceof Error ? error.message : 'Unable to connect to the selected wallet.';
+      setConnectionError(message);
       notifyWalletEvent(
         'connection_failed',
-        error instanceof Error ? error.message : 'Please try again.'
+        message
       );
       return null;
     } finally {
       setIsConnecting(false);
-      setWalletModalOpen(false);
     }
   };
 
@@ -148,6 +173,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       notifyWalletEvent('connection_failed', 'No supported wallet providers were found.');
       return null;
     }
+    setConnectionError(null);
     setWalletModalOpen(true);
     return null;
   };
@@ -186,20 +212,43 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       {walletModalOpen && (
         <div className="fixed inset-0 z-[80] grid place-items-center bg-black/70 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-hi bg-surface p-6 shadow-2xl">
+          <div
+            className="w-full max-w-md rounded-2xl border border-hi bg-surface p-6 shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="wallet-modal-title"
+            aria-describedby={connectionError ? 'wallet-connection-error' : undefined}
+          >
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-black">{t('wallet.modalTitle') || 'Select a wallet'}</h3>
+              <h3 id="wallet-modal-title" className="text-lg font-black">
+                {t('wallet.modalTitle') || 'Select a wallet'}
+              </h3>
               <button
-                onClick={() => setWalletModalOpen(false)}
+                type="button"
+                onClick={() => {
+                  setWalletModalOpen(false);
+                  setConnectionError(null);
+                }}
                 className="rounded-lg border border-hi px-2 py-1 text-xs text-muted hover:text-text"
               >
                 Close
               </button>
             </div>
+            {connectionError && (
+              <div
+                id="wallet-connection-error"
+                role="alert"
+                aria-live="assertive"
+                className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+              >
+                {connectionError}
+              </div>
+            )}
             <div className="space-y-2">
               {walletOptions.map((wallet) => (
                 <button
                   key={wallet.id}
+                  type="button"
                   onClick={() => void connectWithWallet(wallet.id)}
                   disabled={!wallet.isAvailable || isConnecting}
                   className="flex w-full items-center justify-between rounded-xl border border-hi bg-black/20 px-4 py-3 text-left transition hover:bg-black/30 disabled:cursor-not-allowed disabled:opacity-50"
