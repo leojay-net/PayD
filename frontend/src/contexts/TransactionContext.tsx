@@ -14,9 +14,7 @@ const TransactionContext = createContext<TransactionContextValue | null>(null);
 export function TransactionProvider({ children }: { children: ReactNode }) {
   const transactionState = usePendingTransactions();
 
-  return (
-    <TransactionContext value={transactionState}>{children}</TransactionContext>
-  );
+  return <TransactionContext value={transactionState}>{children}</TransactionContext>;
 }
 
 export function useTransactionNotifications() {
