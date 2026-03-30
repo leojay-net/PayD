@@ -6,8 +6,13 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Code2,
+  Shield,
 } from 'lucide-react';
 import { useNotification } from '../hooks/useNotification';
+import { useWallet } from '../hooks/useWallet';
+import ContractUpgradeTab from '../components/ContractUpgradeTab';
+import MultisigDetector from '../components/MultisigDetector';
 
 /** Centralized API base so URL changes happen in one place. */
 const API_BASE = '/api/v1';
@@ -50,7 +55,7 @@ interface LogsApiResponse {
   total: number;
 }
 
-type ActiveTab = 'account' | 'global' | 'status' | 'logs';
+type ActiveTab = 'account' | 'global' | 'status' | 'logs' | 'contracts' | 'multisig';
 
 // ---------------------------------------------------------------------------
 // Style constants – defined once to avoid repetition
@@ -67,10 +72,13 @@ const TAB_LABELS: Record<ActiveTab, string> = {
   global: 'Global Asset Control',
   status: 'Status Check',
   logs: 'Audit Logs',
+  contracts: 'Contract Upgrades',
+  multisig: 'Multisig Detection',
 };
 
 export default function AdminPanel() {
-  const { notifySuccess, notifyError } = useNotification();
+  const { notifySuccess, notifyError, notifyApiError } = useNotification();
+  const { address: adminAddress } = useWallet();
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('account');
 
@@ -121,7 +129,7 @@ export default function AdminPanel() {
         setLogsTotal(data.total);
       }
     } catch {
-      notifyError('Fetch Error', 'Failed to load audit logs.');
+      notifyApiError('Fetch Error', 'Failed to load audit logs.');
     } finally {
       setLogsLoading(false);
     }
@@ -154,7 +162,7 @@ export default function AdminPanel() {
       setAccountSecret('');
       setAccountReason('');
     } catch (err: unknown) {
-      notifyError('Action Failed', err instanceof Error ? err.message : 'Action failed');
+      notifyApiError('Action Failed', err instanceof Error ? err.message : 'Action failed');
     } finally {
       setAccountLoading(false);
     }
@@ -182,7 +190,7 @@ export default function AdminPanel() {
       setGlobalSecret('');
       setGlobalReason('');
     } catch (err: unknown) {
-      notifyError('Action Failed', err instanceof Error ? err.message : 'Action failed');
+      notifyApiError('Action Failed', err instanceof Error ? err.message : 'Action failed');
     } finally {
       setGlobalLoading(false);
     }
@@ -207,7 +215,7 @@ export default function AdminPanel() {
       if (!res.ok) throw new Error(data.error ?? 'Status check failed');
       setStatusResult(data);
     } catch (err: unknown) {
-      notifyError(
+      notifyApiError(
         'Status Check Failed',
         err instanceof Error ? err.message : 'Status check failed'
       );
@@ -250,6 +258,8 @@ export default function AdminPanel() {
       <div className="w-full mb-8 flex gap-4 border-b border-hi overflow-x-auto">
         {(Object.keys(TAB_LABELS) as ActiveTab[]).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)} className={tabClass(tab)}>
+            {tab === 'contracts' && <Code2 className="inline w-3.5 h-3.5 mr-1.5 -mt-0.5" />}
+            {tab === 'multisig' && <Shield className="inline w-3.5 h-3.5 mr-1.5 -mt-0.5" />}
             {TAB_LABELS[tab]}
           </button>
         ))}
@@ -509,6 +519,12 @@ export default function AdminPanel() {
             )}
           </div>
         )}
+
+        {/* ── Contract Upgrades ────────────────────────────────────── */}
+        {activeTab === 'contracts' && <ContractUpgradeTab adminAddress={adminAddress ?? ''} />}
+
+        {/* ── Multisig Detection ───────────────────────────────────── */}
+        {activeTab === 'multisig' && <MultisigDetector />}
 
         {/* ── Audit Logs ───────────────────────────────────────────── */}
         {activeTab === 'logs' && (

@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
 import pg from 'pg';
-import Redis from 'ioredis';
-import { config } from '../config/env';
-import { StellarService } from '../services/stellarService';
+import { Redis } from 'ioredis';
+import { config } from '../config/env.js';
 
 const pool = new pg.Pool({ connectionString: config.DATABASE_URL });
 
@@ -19,17 +18,23 @@ export class HealthController {
     const timestamp = new Date().toISOString();
     const uptime = process.uptime();
     const version = process.env.npm_package_version || '1.0.0';
+    const buildTimestamp = process.env.BUILD_TIMESTAMP || process.env.BUILD_TIME || 'unknown';
 
     const statusReport: any = {
       status: 'ok',
       timestamp,
       uptime,
       version,
-      environment: config.NODE_ENV,
+      environment: {
+        name: config.NODE_ENV,
+        nodeVersion: process.version,
+      },
+      build: {
+        timestamp: buildTimestamp,
+      },
       dependencies: {
         database: { status: 'unknown' },
         redis: { status: 'unknown' },
-        horizon: { status: 'unknown' },
       },
     };
 
@@ -57,17 +62,6 @@ export class HealthController {
       }
     } else {
       statusReport.dependencies.redis.status = 'not_configured';
-    }
-
-    // 3. Stellar Horizon Check
-    try {
-      const server = StellarService.getServer();
-      await server.feeStats();
-      statusReport.dependencies.horizon.status = 'connected';
-    } catch (error: any) {
-      isHealthy = false;
-      statusReport.dependencies.horizon.status = 'disconnected';
-      statusReport.dependencies.horizon.error = error.message;
     }
 
     if (!isHealthy) {

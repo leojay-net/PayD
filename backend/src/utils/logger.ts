@@ -1,6 +1,8 @@
 import winston from 'winston';
 import { ElasticsearchTransport } from 'winston-elasticsearch';
 import { Client } from '@elastic/elasticsearch';
+import { getRequestId, REQUEST_ID_HEADER } from '../middlewares/requestIdMiddleware.js';
+
 // ElasticsearchTransport's client type lags behind @elastic/elasticsearch v8;
 // cast via unknown to avoid declaration-file version conflicts.
 type EsClientCompat = Parameters<typeof ElasticsearchTransport>[0]['client'];
@@ -12,33 +14,46 @@ const logLevel = process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug');
 const esEnabled = process.env.ELASTICSEARCH_ENABLED === 'true';
 const esUrl = process.env.ELASTICSEARCH_URL || 'http://localhost:9200';
 
+// Inject the async-context request ID into every log entry automatically.
+const requestIdFormat = winston.format((info) => {
+  const requestId = getRequestId();
+  if (requestId) {
+    (info as Record<string, unknown>)[REQUEST_ID_HEADER] = requestId;
+  }
+  return info;
+});
+
 // Console format: colorized for dev, JSON for prod
 const consoleFormat = isProduction
-  ? combine(timestamp(), errors({ stack: true }), json())
+  ? combine(requestIdFormat(), timestamp(), errors({ stack: true }), json())
   : combine(
+      requestIdFormat(),
       colorize({ all: true }),
       timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       errors({ stack: true }),
-      printf(({ timestamp: ts, level, message, service, traceId, ...meta }) => {
-        const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
+      printf(({ timestamp: ts, level, message, traceId, ...meta }) => {
+        const requestId = (meta as Record<string, unknown>)[REQUEST_ID_HEADER];
+        const metaCopy = { ...meta };
+        delete (metaCopy as Record<string, unknown>)[REQUEST_ID_HEADER];
+        const metaStr = Object.keys(metaCopy).length ? ` ${JSON.stringify(metaCopy)}` : '';
         const traceStr = traceId ? ` [trace:${traceId}]` : '';
-        return `[${ts}] [${level}]${traceStr} ${message}${metaStr}`;
+        const reqStr = requestId ? ` [req:${requestId}]` : '';
+        return `[${ts}] [${level}]${traceStr}${reqStr} ${message}${metaStr}`;
       }),
     );
 
 const transports: winston.transport[] = [
   new winston.transports.Console({ format: consoleFormat }),
-  // Persist all logs to file
   new winston.transports.File({
     filename: 'logs/error.log',
     level: 'error',
-    format: combine(timestamp(), errors({ stack: true }), json()),
+    format: combine(requestIdFormat(), timestamp(), errors({ stack: true }), json()),
     maxsize: 10 * 1024 * 1024, // 10 MB
     maxFiles: 5,
   }),
   new winston.transports.File({
     filename: 'logs/combined.log',
-    format: combine(timestamp(), errors({ stack: true }), json()),
+    format: combine(requestIdFormat(), timestamp(), errors({ stack: true }), json()),
     maxsize: 20 * 1024 * 1024, // 20 MB
     maxFiles: 10,
   }),
@@ -75,20 +90,26 @@ const winstonLogger = winston.createLogger({
   level: logLevel,
   defaultMeta: { service: 'payd-backend' },
   transports,
-  // Prevent winston from crashing on unhandled rejections
   exitOnError: false,
 });
 
 /**
- * Logger maintains backward-compatible interface with the original Logger class
- * while adding structured JSON output and Elasticsearch shipping.
+ * Singleton structured logger with leveled logging (DEBUG, INFO, WARN, ERROR).
+ * Backed by Winston with console, file-rotation, and optional Elasticsearch transports.
+ * Automatically attaches the async-context request ID to every log entry.
  */
 export class Logger {
   private static instance: Logger;
 
   private constructor() {}
 
-  static getInstance(): Logger {
+  /**
+   * Gets the singleton logger instance (creates if not exists).
+   *
+   * @param _level - Accepted for backward compatibility; level is set via LOG_LEVEL env var.
+   * @returns The logger instance
+   */
+  static getInstance(_level?: string): Logger {
     if (!Logger.instance) {
       Logger.instance = new Logger();
     }
@@ -115,7 +136,7 @@ export class Logger {
     }
   }
 
-  /** Attach a trace/span ID to all subsequent log entries in a request context. */
+  /** Returns a child logger with additional bound metadata (e.g. traceId, userId). */
   child(meta: Record<string, unknown>): winston.Logger {
     return winstonLogger.child(meta);
   }

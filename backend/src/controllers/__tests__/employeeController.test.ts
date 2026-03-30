@@ -9,8 +9,26 @@ jest.mock('../../config/env', () => ({
   },
 }));
 
-import employeeRoutes from '../../routes/employeeRoutes';
-import { employeeService } from '../../services/employeeService';
+jest.mock('../../middlewares/auth.js', () => ({
+  __esModule: true,
+  default: (req: any, _res: any, next: any) => {
+    req.user = { id: 1, organizationId: 1, role: 'EMPLOYER' };
+    next();
+  },
+  authenticateJWT: (req: any, _res: any, next: any) => {
+    req.user = { id: 1, organizationId: 1, role: 'EMPLOYER' };
+    next();
+  },
+}));
+
+jest.mock('../../middlewares/rbac.js', () => ({
+  __esModule: true,
+  authorizeRoles: () => (_req: any, _res: any, next: any) => next(),
+  isolateOrganization: (_req: any, _res: any, next: any) => next(),
+}));
+
+import employeeRoutes from '../../routes/employeeRoutes.js';
+import { employeeService } from '../../services/employeeService.js';
 
 // Mock the employee service
 jest.mock('../../services/employeeService');
@@ -70,11 +88,31 @@ describe('EmployeeController', () => {
 
       expect(response.body).toEqual(mockResult);
       expect(employeeService.findAll).toHaveBeenCalledWith(
+        1,
         expect.objectContaining({
           page: 1,
           limit: 10,
         })
       );
+    });
+
+    it('should pass q to findAll when provided', async () => {
+      const mockResult = {
+        data: [{ id: 1, first_name: 'Alice' }],
+        pagination: { total: 1, page: 1, limit: 10, totalPages: 1 },
+      };
+      (employeeService.findAll as jest.Mock).mockResolvedValue(mockResult);
+
+      await request(app).get('/api/employees?q=alice').expect(200);
+
+      expect(employeeService.findAll).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ q: 'alice' })
+      );
+    });
+
+    it('should return 400 for invalid query params', async () => {
+      await request(app).get('/api/employees?status=invalid_status').expect(400);
     });
   });
 
@@ -86,7 +124,7 @@ describe('EmployeeController', () => {
       const response = await request(app).get('/api/employees/1').expect(200);
 
       expect(response.body).toEqual(mockEmployee);
-      expect(employeeService.findById).toHaveBeenCalledWith(1);
+      expect(employeeService.findById).toHaveBeenCalledWith(1, 1);
     });
 
     it('should return 404 if employee not found', async () => {
@@ -105,7 +143,11 @@ describe('EmployeeController', () => {
       const response = await request(app).patch('/api/employees/1').send(updateData).expect(200);
 
       expect(response.body).toEqual(mockUpdatedEmployee);
-      expect(employeeService.update).toHaveBeenCalledWith(1, expect.objectContaining(updateData));
+      expect(employeeService.update).toHaveBeenCalledWith(
+        1,
+        1,
+        expect.objectContaining(updateData)
+      );
     });
   });
 
@@ -115,7 +157,7 @@ describe('EmployeeController', () => {
 
       await request(app).delete('/api/employees/1').expect(204);
 
-      expect(employeeService.delete).toHaveBeenCalledWith(1);
+      expect(employeeService.delete).toHaveBeenCalledWith(1, 1);
     });
 
     it('should return 404 if employee not found', async () => {
