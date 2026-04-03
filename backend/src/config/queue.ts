@@ -7,6 +7,7 @@ export const redisConnection: ConnectionOptions = {
 
 export const PAYROLL_QUEUE_NAME = 'payroll-processing';
 export const NOTIFICATION_QUEUE_NAME = 'payment-notifications';
+export const SCHEDULER_QUEUE_NAME = 'payroll-scheduler';
 
 export const notificationQueueConfig = {
   attempts: 3,

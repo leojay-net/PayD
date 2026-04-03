@@ -50,6 +50,78 @@ const CONTRACT_ERROR_MAPPING: Record<number, { message: string; action: string }
   },
 };
 
+const GENERIC_ERROR_PATTERNS: Array<{
+  pattern: RegExp;
+  code: string;
+  message: string;
+  suggestedAction: string;
+}> = [
+  {
+    pattern: /insufficient (balance|funds)/i,
+    code: 'INSUFFICIENT_FUNDS',
+    message: 'Insufficient balance to complete the contract action.',
+    suggestedAction: 'Fund the signing wallet or reduce the requested amount before retrying.',
+  },
+  {
+    pattern: /tx_bad_auth|op_bad_auth|unauthorized/i,
+    code: 'UNAUTHORIZED',
+    message: 'The connected wallet is not authorized for this contract action.',
+    suggestedAction: 'Switch to the required signer or collect the remaining multisig approvals.',
+  },
+  {
+    pattern: /resource limit|budget exceeded|exceeded the budget/i,
+    code: 'RESOURCE_LIMIT',
+    message: 'The Soroban simulation exceeded its resource budget.',
+    suggestedAction: 'Try a smaller batch or split the action into multiple transactions.',
+  },
+  {
+    pattern: /storage|footprint/i,
+    code: 'STORAGE_ERROR',
+    message: 'The contract failed while accessing Soroban storage.',
+    suggestedAction:
+      'Refresh the page and retry. If the issue persists, verify the contract state.',
+  },
+];
+
+function parseContractCode(rawMessage: string): ContractErrorDetail | null {
+  const errorMatch = rawMessage.match(/Error\(Contract,\s*#?(\d+)\)/i);
+  if (!errorMatch) {
+    return null;
+  }
+
+  const code = parseInt(errorMatch[1], 10);
+  const mapped = CONTRACT_ERROR_MAPPING[code];
+
+  if (mapped) {
+    return {
+      code: `CONTRACT_ERR_${code}`,
+      message: mapped.message,
+      suggestedAction: mapped.action,
+    };
+  }
+
+  return {
+    code: `CONTRACT_ERR_${code}`,
+    message: `Contract reverted with error code ${code}.`,
+    suggestedAction:
+      'Review the contract inputs and current state, then retry with corrected parameters.',
+  };
+}
+
+function parseGenericContractError(rawMessage: string): ContractErrorDetail | null {
+  for (const entry of GENERIC_ERROR_PATTERNS) {
+    if (entry.pattern.test(rawMessage)) {
+      return {
+        code: entry.code,
+        message: entry.message,
+        suggestedAction: entry.suggestedAction,
+      };
+    }
+  }
+
+  return null;
+}
+
 /**
  * Parses a Soroban execution result XDR or simulation error into a structured format.
  */
@@ -59,27 +131,14 @@ export function parseContractError(
 ): ContractErrorDetail {
   // 1. Check for known error messages in simulation string (Matches transactionSimulation.ts pattern)
   if (simulationError) {
-    const errorMatch = simulationError.match(/Error\(Contract, (\d+)\)/);
-    if (errorMatch) {
-      const code = parseInt(errorMatch[1], 10);
-      const mapped = CONTRACT_ERROR_MAPPING[code];
-      if (mapped) {
-        return {
-          code: `CONTRACT_ERR_${code}`,
-          message: mapped.message,
-          suggestedAction: mapped.action,
-        };
-      }
+    const parsedContractCode = parseContractCode(simulationError);
+    if (parsedContractCode) {
+      return parsedContractCode;
     }
 
-    // Pattern matching for generic errors
-    const lowerError = simulationError.toLowerCase();
-    if (lowerError.includes('unauthorized')) {
-      return {
-        code: 'UNAUTHORIZED',
-        message: 'Unauthorized contract invocation.',
-        suggestedAction: 'Ensure you are the correct administrator for this contract.',
-      };
+    const parsedGenericError = parseGenericContractError(simulationError);
+    if (parsedGenericError) {
+      return parsedGenericError;
     }
   }
 

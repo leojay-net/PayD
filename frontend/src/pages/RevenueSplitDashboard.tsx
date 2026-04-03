@@ -238,7 +238,7 @@ export default function RevenueSplitDashboard() {
           <h1 className="text-4xl font-black tracking-tight">
             Revenue Split <span className="text-accent">Dashboard</span>
           </h1>
-          <p className="mt-2 font-mono text-sm tracking-wider text-zinc-500 uppercase">
+          <p className="mt-2 font-mono text-sm tracking-wider text-zinc-300 uppercase">
             Contract-backed allocations, live balances, and indexed distributions
           </p>
         </div>
@@ -268,13 +268,13 @@ export default function RevenueSplitDashboard() {
         <section className="card glass noise xl:col-span-1">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold">Current Allocation Splits</h2>
-            <span className="rounded-full border border-zinc-700 px-3 py-1 text-[11px] uppercase tracking-wide text-zinc-400">
+            <span className="rounded-full border border-zinc-700 px-3 py-1 text-[11px] uppercase tracking-wide text-zinc-300">
               On-chain
             </span>
           </div>
 
           {chartData.length === 0 ? (
-            <p className="text-sm text-zinc-400">No allocation data loaded.</p>
+            <p className="text-sm text-zinc-300">No allocation data loaded.</p>
           ) : (
             <div className="space-y-5">
               <div className="h-64">
@@ -293,9 +293,9 @@ export default function RevenueSplitDashboard() {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number | string | (number | string)[] | undefined) =>
-                        `${Number(Array.isArray(value) ? value[0] : (value ?? 0)).toFixed(2)}%`
-                      }
+                      formatter={(
+                        value: number | string | readonly (number | string)[] | undefined
+                      ) => `${Number(Array.isArray(value) ? value[0] : (value ?? 0)).toFixed(2)}%`}
                       contentStyle={{
                         background: '#0f172a',
                         border: '1px solid rgba(255,255,255,0.1)',
@@ -379,7 +379,7 @@ export default function RevenueSplitDashboard() {
           </div>
 
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-            <div className="text-xs text-zinc-400">
+            <div className="text-xs text-zinc-300">
               <p>Total allocation must be exactly 100%.</p>
               <p>Submission uses a signed contract call only after simulation passes.</p>
             </div>
@@ -403,7 +403,7 @@ export default function RevenueSplitDashboard() {
         <section className="card glass noise xl:col-span-1">
           <h2 className="mb-4 text-lg font-bold">Live Recipient Balances</h2>
           {recipientBalances.length === 0 ? (
-            <p className="text-sm text-zinc-400">No recipient distributions available yet.</p>
+            <p className="text-sm text-zinc-300">No recipient distributions available yet.</p>
           ) : (
             <div className="space-y-2">
               {recipientBalances.map((row) => (
@@ -431,17 +431,17 @@ export default function RevenueSplitDashboard() {
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold">Historical Distribution Events</h2>
             {orgPublicKey ? (
-              <span className="font-mono text-[11px] text-zinc-500">
+              <span className="font-mono text-[11px] text-zinc-300">
                 Org: {orgPublicKey.slice(0, 6)}...{orgPublicKey.slice(-4)}
               </span>
             ) : null}
           </div>
           {events.length === 0 ? (
-            <p className="text-sm text-zinc-400">No backend indexed distribution events found.</p>
+            <p className="text-sm text-zinc-300">No backend indexed distribution events found.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="border-b border-zinc-800 text-left text-zinc-500">
+                <thead className="border-b border-zinc-800 text-left text-zinc-300">
                   <tr>
                     <th className="py-2 pr-4">Date</th>
                     <th className="py-2 pr-4">Recipient</th>
@@ -472,7 +472,7 @@ export default function RevenueSplitDashboard() {
                             {event.txHash.slice(0, 10)}...
                           </a>
                         ) : (
-                          <span className="text-zinc-500">N/A</span>
+                          <span className="text-zinc-300">N/A</span>
                         )}
                       </td>
                     </tr>

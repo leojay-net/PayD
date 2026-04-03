@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useDebounce } from '../hooks/useDebounce';
 import { Avatar } from './Avatar';
 import { AvatarUpload } from './AvatarUpload';
 import { CSVUploader } from './CSVUploader';
 import type { CSVRow } from './CSVUploader';
 import { Pencil, Trash2 } from 'lucide-react';
+import { EmployeeRemovalConfirmModal } from './EmployeeRemovalConfirmModal';
 
 interface Employee {
   id: string;
@@ -18,6 +20,7 @@ interface Employee {
 
 interface EmployeeListProps {
   employees: Employee[];
+  isLoading?: boolean;
   onEmployeeClick?: (employee: Employee) => void;
   onAddEmployee: (employee: Employee) => void;
   onEditEmployee?: (employee: Employee) => void;
@@ -25,8 +28,49 @@ interface EmployeeListProps {
   onUpdateEmployeeImage?: (id: string, imageUrl: string) => void;
 }
 
+const SKELETON_ROW_COUNT = 5;
+
+const EmployeeSkeletonRow: React.FC = () => (
+  <tr className="animate-pulse border-b border-gray-200/20">
+    {/* Name column */}
+    <td className="p-6">
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-gray-300/30 shrink-0" />
+        <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+          <div className="h-2.5 rounded bg-gray-300/30 w-3/4" />
+          <div className="h-2 rounded bg-gray-300/20 w-1/2" />
+        </div>
+      </div>
+    </td>
+    {/* Role */}
+    <td className="p-6">
+      <div className="h-2.5 rounded bg-gray-300/30 w-2/3" />
+    </td>
+    {/* Wallet */}
+    <td className="p-6">
+      <div className="h-2.5 rounded bg-gray-300/20 w-3/4 font-mono" />
+    </td>
+    {/* Salary */}
+    <td className="p-6">
+      <div className="h-2.5 rounded bg-gray-300/30 w-1/2" />
+    </td>
+    {/* Status */}
+    <td className="p-6">
+      <div className="h-5 rounded-full bg-gray-300/20 w-16" />
+    </td>
+    {/* Actions */}
+    <td className="p-6">
+      <div className="flex gap-2">
+        <div className="w-5 h-5 rounded bg-gray-300/20" />
+        <div className="w-5 h-5 rounded bg-gray-300/20" />
+      </div>
+    </td>
+  </tr>
+);
+
 export const EmployeeList: React.FC<EmployeeListProps> = ({
   employees,
+  isLoading = false,
   onAddEmployee,
   onEditEmployee,
   onRemoveEmployee,
@@ -38,7 +82,10 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   const [showEditModal, setShowEditModal] = useState<{ open: boolean; employee?: Employee }>({
     open: false,
   });
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ open: boolean; id?: string }>({
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{
+    open: boolean;
+    employee?: Employee;
+  }>({
     open: false,
   });
   const [showAvatarModal, setShowAvatarModal] = useState<{
@@ -47,6 +94,8 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   }>({ open: false });
   const [sortKey, setSortKey] = useState<keyof Employee>('name');
   const [sortAsc, setSortAsc] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   const handleDataParsed = (data: CSVRow[]) => {
     const newEmployees = data.map((row) => ({
@@ -78,7 +127,18 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
     }
   };
 
-  const sortedEmployees = [...employees].sort((a, b) => {
+  const filteredEmployees = debouncedSearch
+    ? employees.filter((emp) => {
+        const q = debouncedSearch.toLowerCase();
+        return (
+          emp.name.toLowerCase().includes(q) ||
+          emp.email.toLowerCase().includes(q) ||
+          emp.position.toLowerCase().includes(q)
+        );
+      })
+    : employees;
+
+  const sortedEmployees = [...filteredEmployees].sort((a, b) => {
     const valA = a[sortKey] ?? '';
     const valB = b[sortKey] ?? '';
     if (typeof valA === 'number' && typeof valB === 'number') {
@@ -136,41 +196,50 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   };
 
   // Delete Confirm
-  const handleDeleteConfirm = () => {
-    if (showDeleteConfirm.id && onRemoveEmployee) {
-      onRemoveEmployee(showDeleteConfirm.id);
+  const handleDeleteConfirm = (employeeId: string) => {
+    if (onRemoveEmployee) {
+      onRemoveEmployee(employeeId);
     }
     setShowDeleteConfirm({ open: false });
   };
 
   return (
     <div className="w-full card glass noise overflow-hidden p-0">
-      <div className="flex justify-between items-center p-6">
+      <div className="flex flex-wrap justify-between items-center gap-3 p-6">
         <span className="font-bold text-lg">Employees</span>
+        <input
+          type="search"
+          id="employee-search"
+          aria-label="Search employees"
+          placeholder="Search by name, email, or role…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="rounded border border-gray-300 bg-transparent px-3 py-1.5 text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent"
+        />
       </div>
-      <table className="w-full text-left border-collapse">
+      <table className="w-full table-fixed text-left border-collapse">
         <thead>
           <tr className="border-b border-hi">
             <th
-              className="p-6 text-xs font-bold uppercase tracking-widest text-muted cursor-pointer"
+              className="w-[28%] p-6 text-xs font-bold uppercase tracking-widest text-muted cursor-pointer"
               onClick={() => handleSort('name')}
             >
               Name {sortKey === 'name' && (sortAsc ? '▲' : '▼')}
             </th>
             <th
-              className="p-6 text-xs font-bold uppercase tracking-widest text-muted cursor-pointer"
+              className="w-[18%] p-6 text-xs font-bold uppercase tracking-widest text-muted cursor-pointer"
               onClick={() => handleSort('position')}
             >
               Role {sortKey === 'position' && (sortAsc ? '▲' : '▼')}
             </th>
             <th
-              className="p-6 text-xs font-bold uppercase tracking-widest text-muted cursor-pointer"
+              className="w-[16%] p-6 text-xs font-bold uppercase tracking-widest text-muted cursor-pointer"
               onClick={() => handleSort('wallet')}
             >
               Wallet {sortKey === 'wallet' && (sortAsc ? '▲' : '▼')}
             </th>
             <th
-              className="p-6 text-xs font-bold uppercase tracking-widest text-muted cursor-pointer"
+              className="w-[14%] p-6 text-xs font-bold uppercase tracking-widest text-muted cursor-pointer"
               onClick={() => handleSort('salary')}
             >
               Salary {sortKey === 'salary' && (sortAsc ? '▲' : '▼')}
@@ -185,15 +254,22 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
-          {sortedEmployees.length === 0 ? (
+          {isLoading ? (
+            Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (
+              <EmployeeSkeletonRow key={i} />
+            ))
+          ) : sortedEmployees.length === 0 ? (
             <tr>
               <td colSpan={6} className="p-6 text-center text-gray-500">
-                No employees found
+                {debouncedSearch ? `No employees match "${debouncedSearch}"` : 'No employees found'}
               </td>
             </tr>
           ) : (
             sortedEmployees.map((employee) => (
-              <tr key={employee.id} className="cursor-pointer transition">
+              <tr
+                key={employee.id}
+                className="cursor-pointer transition-colors hover:bg-white/5"
+              >
                 <td className="p-6">
                   <div className="flex items-center gap-3">
                     <Avatar
@@ -202,11 +278,24 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                       imageUrl={employee.imageUrl}
                       size="sm"
                     />
-                    <div className="flex flex-col">
-                      <span className="text-xs text-muted">{employee.name}</span>
+                    <div className="min-w-0 flex flex-col">
+                      <span
+                        className="truncate text-xs text-muted"
+                        title={employee.name}
+                        aria-label={`Employee name: ${employee.name}`}
+                      >
+                        {employee.name}
+                      </span>
+                      <span
+                        className="truncate text-[11px] text-muted/80"
+                        title={employee.email}
+                        aria-label={`Employee email: ${employee.email}`}
+                      >
+                        {employee.email}
+                      </span>
                       <button
                         type="button"
-                        className="text-[10px] text-blue-500 hover:underline text-left"
+                        className="w-fit text-[10px] text-blue-500 hover:underline text-left"
                         onClick={() => setShowAvatarModal({ open: true, employee })}
                       >
                         Update photo
@@ -214,8 +303,10 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                     </div>
                   </div>
                 </td>
-                <td className="p-6 text-sm font-medium">{employee.position}</td>
-                <td className="p-6 font-mono text-xs text-muted">
+                <td className="p-6 truncate text-sm font-medium" title={employee.position}>
+                  {employee.position}
+                </td>
+                <td className="p-6 truncate font-mono text-xs text-muted" title={employee.wallet}>
                   {shortenWallet(employee.wallet || '')}
                 </td>
                 <td className="p-6">
@@ -264,7 +355,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                   <button
                     className="text-red-500 hover:text-red-700"
                     title="Remove"
-                    onClick={() => setShowDeleteConfirm({ open: true, id: employee.id })}
+                    onClick={() => setShowDeleteConfirm({ open: true, employee })}
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
@@ -412,29 +503,14 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
           </div>
         </div>
       )}
-      {/* Delete Confirm */}
-      {showDeleteConfirm.open && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-lg font-bold mb-4">Confirm Removal</h2>
-            <p className="mb-4">Are you sure you want to remove this employee?</p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowDeleteConfirm({ open: false })}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                className="px-4 py-2 bg-red-500 text-white rounded"
-              >
-                Remove
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Employee Removal Confirmation Modal */}
+      <EmployeeRemovalConfirmModal
+        isOpen={showDeleteConfirm.open}
+        employeeName={showDeleteConfirm.employee?.name || ''}
+        employeeId={showDeleteConfirm.employee?.id || ''}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setShowDeleteConfirm({ open: false })}
+      />
 
       {showAvatarModal.open && showAvatarModal.employee && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

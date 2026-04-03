@@ -274,11 +274,13 @@ export default function TransactionHistory() {
               <div className="w-16 h-16 rounded-full bg-surface-hi flex items-center justify-center mx-auto mb-6 border border-hi">
                 <Activity className="w-8 h-8 opacity-40 text-muted" />
               </div>
-              <p className="text-lg font-bold text-text mb-1">No transactions found</p>
+              <p className="text-lg font-bold text-text mb-1">
+                {activeFilterCount > 0 ? 'No transactions found' : 'No transactions yet'}
+              </p>
               <p className="text-sm">
                 {activeFilterCount > 0
                   ? 'Try adjusting your filters.'
-                  : 'No transaction history available yet.'}
+                  : 'Your payroll history will appear here once payments are sent.'}
               </p>
             </div>
           ) : null}

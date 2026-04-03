@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WalletContext } from '../hooks/useWallet';
 import { useWalletManager } from '../hooks/useWalletManager';
 
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { t } = useTranslation();
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const walletManager = useWalletManager();
   const {
     address,
@@ -21,8 +22,17 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     walletModalOpen,
     setWalletModalOpen,
     walletOptions,
-    connectWithWallet,
+    connectWithWallet: baseConnectWithWallet,
   } = walletManager;
+
+  const connectWithWallet = async (walletId: string) => {
+    setConnectionError(null);
+    const result = await baseConnectWithWallet(walletId);
+    if (!result) {
+      setConnectionError('Unable to connect to the selected wallet. Please try again.');
+    }
+    return result;
+  };
 
   return (
     <>
@@ -34,20 +44,43 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       {walletModalOpen && (
         <div className="fixed inset-0 z-[80] grid place-items-center bg-black/70 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-hi bg-surface p-6 shadow-2xl">
+          <div
+            className="w-full max-w-md rounded-2xl border border-hi bg-surface p-6 shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="wallet-modal-title"
+            aria-describedby={connectionError ? 'wallet-connection-error' : undefined}
+          >
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-black">{t('wallet.modalTitle')}</h3>
+              <h3 id="wallet-modal-title" className="text-lg font-black">
+                {t('wallet.modalTitle') || 'Select a wallet'}
+              </h3>
               <button
-                onClick={() => setWalletModalOpen(false)}
+                type="button"
+                onClick={() => {
+                  setWalletModalOpen(false);
+                  setConnectionError(null);
+                }}
                 className="rounded-lg border border-hi px-2 py-1 text-xs text-muted hover:text-text"
               >
                 Close
               </button>
             </div>
+            {connectionError && (
+              <div
+                id="wallet-connection-error"
+                role="alert"
+                aria-live="assertive"
+                className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+              >
+                {connectionError}
+              </div>
+            )}
             <div className="space-y-2">
               {walletOptions.map((wallet) => (
                 <button
                   key={wallet.id}
+                  type="button"
                   onClick={() => void connectWithWallet(wallet.id)}
                   disabled={!wallet.isAvailable || isConnecting}
                   className="flex w-full items-center justify-between rounded-xl border border-hi bg-black/20 px-4 py-3 text-left transition hover:bg-black/30 disabled:cursor-not-allowed disabled:opacity-50"

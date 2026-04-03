@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import {
   LineChart,
   Line,
@@ -50,7 +51,7 @@ interface AnalyticsData {
 }
 
 // recharts v3 Formatter receives ValueType | undefined
-type RechartsValue = number | string | (number | string)[] | undefined;
+type RechartsValue = number | string | readonly (number | string)[] | undefined;
 
 // ── Mock fetch (replace with real API call when endpoint is available) ────────
 
@@ -90,6 +91,31 @@ async function fetchAnalytics(startDate: string, endDate: string): Promise<Analy
 // ── Chart colours ─────────────────────────────────────────────────────────────
 
 const PIE_COLORS = ['#6366f1', '#22d3ee', '#f59e0b'];
+
+// ── Animation variants ─────────────────────────────────────────────────────
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      duration: 0.5,
+      ease: 'easeOut' as const,
+    },
+  },
+};
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -139,79 +165,93 @@ export default function PayrollAnalytics() {
       {isError && <p className="text-center text-red-500 py-12">Failed to load analytics data.</p>}
 
       {data && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <motion.div
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {/* Line chart — payroll over time */}
-          <Card>
-            <div className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Total Payroll Over Time</h2>
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={data.trends}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
-                  />
-                  <Tooltip
-                    formatter={(v: RechartsValue) => [
-                      `$${Number(Array.isArray(v) ? v[0] : (v ?? 0)).toLocaleString()}`,
-                      'Total',
-                    ]}
-                  />
-                  <SafeLegend />
-                  <Line
-                    type="monotone"
-                    dataKey="total"
-                    name="Payroll Total"
-                    stroke="#6366f1"
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
+          <motion.div variants={cardVariants}>
+            <Card>
+              <div className="p-6">
+                <h2 className="text-lg font-semibold mb-4">Total Payroll Over Time</h2>
+                <ResponsiveContainer width="100%" height={280}>
+                  <LineChart data={data.trends}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
+                    />
+                    <Tooltip
+                      formatter={(v: RechartsValue) => [
+                        `$${Number(Array.isArray(v) ? v[0] : (v ?? 0)).toLocaleString()}`,
+                        'Total',
+                      ]}
+                    />
+                    <SafeLegend />
+                    <Line
+                      type="monotone"
+                      dataKey="total"
+                      name="Payroll Total"
+                      stroke="#6366f1"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          </motion.div>
 
           {/* Pie chart — currency breakdown */}
-          <Card>
-            <div className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Cost Breakdown by Currency</h2>
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={data.currencyBreakdown}
-                    dataKey="value"
-                    nameKey="currency"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label={(props: PieLabelRenderProps) => {
-                      const d = props as PieLabelRenderProps & {
-                        currency?: string;
-                        value?: number;
-                      };
-                      return `${d.currency ?? ''} ${d.value ?? 0}%`;
-                    }}
-                  >
-                    {data.currencyBreakdown.map((_, idx) => (
-                      <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(v: RechartsValue) => [
-                      `${String(Array.isArray(v) ? v[0] : (v ?? 0))}%`,
-                      'Share',
-                    ]}
-                  />
-                  <SafeLegend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
+          <motion.div variants={cardVariants}>
+            <Card>
+              <div className="p-6">
+                <h2 className="text-lg font-semibold mb-4">Cost Breakdown by Currency</h2>
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart>
+                    <Pie
+                      data={data.currencyBreakdown}
+                      dataKey="value"
+                      nameKey="currency"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      label={(props: PieLabelRenderProps) => {
+                        const d = props as PieLabelRenderProps & {
+                          currency?: string;
+                          value?: number;
+                        };
+                        return `${d.currency ?? ''} ${d.value ?? 0}%`;
+                      }}
+                    >
+                      {data.currencyBreakdown.map((item) => (
+                        <Cell
+                          key={item.currency}
+                          fill={
+                            PIE_COLORS[data.currencyBreakdown.indexOf(item) % PIE_COLORS.length]
+                          }
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(v: RechartsValue) => [
+                        `${String(Array.isArray(v) ? v[0] : (v ?? 0))}%`,
+                        'Share',
+                      ]}
+                    />
+                    <SafeLegend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          </motion.div>
 
           {/* Bar chart — success/failure rate */}
-          <div className="lg:col-span-2">
+          <motion.div variants={cardVariants} className="lg:col-span-2">
             <Card>
               <div className="p-6">
                 <h2 className="text-lg font-semibold mb-4">Payment Success / Failure Rate</h2>
@@ -228,8 +268,8 @@ export default function PayrollAnalytics() {
                 </ResponsiveContainer>
               </div>
             </Card>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
     </div>
   );

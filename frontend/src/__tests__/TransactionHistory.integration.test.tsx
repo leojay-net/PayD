@@ -1,8 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+
 /**
  * Integration Tests for TransactionHistory Component
  *
@@ -166,11 +163,13 @@ describe('TransactionHistory Integration', () => {
 
     // Wait for empty state to appear
     await waitFor(() => {
-      expect(getByText('No transactions found')).toBeInTheDocument();
+      expect(getByText('No transactions yet')).toBeInTheDocument();
     });
 
     // When no filters are active, should show default message
-    expect(getByText(/No transaction history available yet/)).toBeInTheDocument();
+    expect(
+      getByText(/Your payroll history will appear here once payments are sent/)
+    ).toBeInTheDocument();
   });
 
   test('displays error state and retry button on API failure', async () => {

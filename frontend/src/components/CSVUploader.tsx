@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, AlertCircle, CheckCircle } from 'lucide-react';
+import { useNotification } from '../hooks/useNotification';
 
 export interface CSVRow {
   rowNumber: number;
@@ -25,6 +26,7 @@ export const CSVUploader: React.FC<CSVUploaderProps> = ({
   const [parsedData, setParsedData] = useState<CSVRow[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { notifySuccess } = useNotification();
 
   const parseCSV = (content: string): CSVRow[] => {
     const lines = content.trim().split('\n');
@@ -116,6 +118,19 @@ export const CSVUploader: React.FC<CSVUploaderProps> = ({
       const rows = parseCSV(content);
       setParsedData(rows);
       onDataParsed(rows);
+
+      // Show success feedback with summary
+      const validCount = rows.filter((r) => r.isValid).length;
+      const invalidCount = rows.filter((r) => !r.isValid).length;
+
+      if (validCount > 0) {
+        const summary =
+          invalidCount > 0
+            ? `${validCount} valid row${validCount !== 1 ? 's' : ''}, ${invalidCount} with error${invalidCount !== 1 ? 's' : ''}`
+            : `${validCount} row${validCount !== 1 ? 's' : ''} ready to upload`;
+
+        notifySuccess('CSV uploaded successfully', summary);
+      }
     };
 
     reader.readAsText(file);
