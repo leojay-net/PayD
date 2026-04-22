@@ -1,3 +1,14 @@
+/**
+ * Application metrics module.
+ *
+ * Exports a Prometheus {@link Registry} pre-loaded with HTTP, database, and
+ * business-domain metric instruments.  All instruments are registered under the
+ * shared `register` singleton so they can be scraped from a single `/metrics`
+ * endpoint.
+ *
+ * Default Node.js process metrics (memory, CPU, event-loop lag, GC) are also
+ * collected automatically via `collectDefaultMetrics`.
+ */
 import { Registry, Counter, Histogram, Gauge, collectDefaultMetrics } from 'prom-client';
 
 export const register = new Registry();
@@ -12,6 +23,7 @@ collectDefaultMetrics({ register });
 
 // ─── HTTP Metrics ────────────────────────────────────────────────────────────
 
+/** Histogram tracking the latency (seconds) of each inbound HTTP request, labelled by method, route, and status code. */
 export const httpRequestDuration = new Histogram({
   name: 'http_request_duration_seconds',
   help: 'Duration of HTTP requests in seconds',
@@ -20,6 +32,7 @@ export const httpRequestDuration = new Histogram({
   registers: [register],
 });
 
+/** Counter tracking the total number of inbound HTTP requests, labelled by method, route, and status code. */
 export const httpRequestTotal = new Counter({
   name: 'http_requests_total',
   help: 'Total number of HTTP requests',
@@ -27,6 +40,7 @@ export const httpRequestTotal = new Counter({
   registers: [register],
 });
 
+/** Counter tracking requests that resulted in a 4xx or 5xx response, labelled by method, route, and status code. */
 export const httpRequestErrors = new Counter({
   name: 'http_request_errors_total',
   help: 'Total number of HTTP requests that resulted in an error (4xx/5xx)',
@@ -34,6 +48,7 @@ export const httpRequestErrors = new Counter({
   registers: [register],
 });
 
+/** Gauge reflecting the current number of open HTTP connections to the server. */
 export const activeConnections = new Gauge({
   name: 'active_connections',
   help: 'Current number of active HTTP connections',
@@ -42,6 +57,7 @@ export const activeConnections = new Gauge({
 
 // ─── Database Metrics ────────────────────────────────────────────────────────
 
+/** Histogram tracking the latency (seconds) of each PostgreSQL query, labelled by operation and table. */
 export const dbQueryDuration = new Histogram({
   name: 'db_query_duration_seconds',
   help: 'Duration of PostgreSQL queries in seconds',
@@ -50,6 +66,10 @@ export const dbQueryDuration = new Histogram({
   registers: [register],
 });
 
+/**
+ * Gauge tracking the current size of the PostgreSQL connection pool.
+ * The `state` label distinguishes `'idle'`, `'waiting'`, and `'total'` connections.
+ */
 export const dbConnectionPool = new Gauge({
   name: 'db_connection_pool_size',
   help: 'Current number of database connections in the pool',
@@ -59,6 +79,11 @@ export const dbConnectionPool = new Gauge({
 
 // ─── Business / Domain Metrics ───────────────────────────────────────────────
 
+/**
+ * Counter tracking total payment operations.
+ * The `status` label accepts `'success'`, `'failed'`, or `'pending'`.
+ * The `type` label accepts `'payroll'`, `'bonus'`, or `'transfer'`.
+ */
 export const paymentOperations = new Counter({
   name: 'payment_operations_total',
   help: 'Total number of payment operations processed',
@@ -66,6 +91,7 @@ export const paymentOperations = new Counter({
   registers: [register],
 });
 
+/** Histogram tracking the wall-clock duration (seconds) of payroll processing jobs, labelled by final status. */
 export const payrollJobDuration = new Histogram({
   name: 'payroll_job_duration_seconds',
   help: 'Duration of payroll processing jobs in seconds',
@@ -74,6 +100,11 @@ export const payrollJobDuration = new Histogram({
   registers: [register],
 });
 
+/**
+ * Counter tracking authentication attempts.
+ * The `method` label accepts `'jwt'`, `'google'`, or `'github'`.
+ * The `status` label accepts `'success'` or `'failure'`.
+ */
 export const authAttempts = new Counter({
   name: 'auth_attempts_total',
   help: 'Total authentication attempts',
@@ -81,6 +112,7 @@ export const authAttempts = new Counter({
   registers: [register],
 });
 
+/** Histogram tracking the latency (seconds) of Stellar Horizon / SDS API calls, labelled by operation and status. */
 export const stellarApiDuration = new Histogram({
   name: 'stellar_api_duration_seconds',
   help: 'Duration of Stellar Horizon/SDS API calls in seconds',
@@ -89,6 +121,7 @@ export const stellarApiDuration = new Histogram({
   registers: [register],
 });
 
+/** Counter tracking unhandled application errors, labelled by error type and originating route. */
 export const errorTotal = new Counter({
   name: 'errors_total',
   help: 'Total number of application errors',
@@ -99,8 +132,19 @@ export const errorTotal = new Counter({
 // ─── Helper ──────────────────────────────────────────────────────────────────
 
 /**
- * Wrap an async fn and record its duration + status in `dbQueryDuration`.
- * Usage: await timeDbQuery('select', 'employees', () => pool.query(...))
+ * Wraps an async function and records its execution duration in the
+ * {@link dbQueryDuration} histogram.
+ *
+ * @example
+ * ```ts
+ * const rows = await timeDbQuery('select', 'employees', () => pool.query(sql));
+ * ```
+ *
+ * @param operation - Database operation label (e.g. `'select'`, `'insert'`)
+ * @param table - Target table name (e.g. `'employees'`)
+ * @param fn - Async function that executes the query and returns its result
+ * @returns The resolved value of `fn`
+ * @throws Re-throws any error raised by `fn` after stopping the timer
  */
 export async function timeDbQuery<T>(
   operation: string,

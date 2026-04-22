@@ -1,15 +1,24 @@
 export interface PaginationParams {
+  /** The current page number (1-based). */
   page: number;
+  /** Maximum number of items per page. */
   limit: number;
+  /** Number of items to skip (computed as `(page - 1) * limit`). */
   offset: number;
 }
 
 export interface PaginatedResult<T> {
+  /** The subset of items for the current page. */
   data: T[];
+  /** The current page number (1-based). */
   page: number;
+  /** The requested limit for this page. */
   limit: number;
+  /** Total number of items across all pages. */
   total: number;
+  /** Whether there are more pages available after this one. */
   hasMore: boolean;
+  /** Total number of pages (computed as `ceil(total / limit)`). */
   pageCount: number;
 }
 

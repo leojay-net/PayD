@@ -83,6 +83,13 @@ const GENERIC_ERROR_PATTERNS: Array<{
   },
 ];
 
+/**
+ * Attempts to extract a numeric contract error code from a raw error message string.
+ * Look for patterns like `Error(Contract, #123)`.
+ *
+ * @param rawMessage - Raw error message from simulation or execution
+ * @returns Structured error detail if a known code is found, `null` otherwise
+ */
 function parseContractCode(rawMessage: string): ContractErrorDetail | null {
   const errorMatch = rawMessage.match(/Error\(Contract,\s*#?(\d+)\)/i);
   if (!errorMatch) {
@@ -108,6 +115,13 @@ function parseContractCode(rawMessage: string): ContractErrorDetail | null {
   };
 }
 
+/**
+ * Matches a raw error message against generic regex patterns for common
+ * Soroban/Stellar errors (e.g. insufficient funds, resource limits).
+ *
+ * @param rawMessage - Raw error message string
+ * @returns Structured error detail if a pattern matches, `null` otherwise
+ */
 function parseGenericContractError(rawMessage: string): ContractErrorDetail | null {
   for (const entry of GENERIC_ERROR_PATTERNS) {
     if (entry.pattern.test(rawMessage)) {
@@ -123,7 +137,12 @@ function parseGenericContractError(rawMessage: string): ContractErrorDetail | nu
 }
 
 /**
- * Parses a Soroban execution result XDR or simulation error into a structured format.
+ * Parses a Soroban execution result XDR or simulation error string into a
+ * structured format with a human-readable message and suggested action.
+ *
+ * @param resultXdr - Optional base64-encoded TransactionResult XDR
+ * @param simulationError - Optional raw error message from simulation
+ * @returns A structured `ContractErrorDetail` object
  */
 export function parseContractError(
   resultXdr?: string,

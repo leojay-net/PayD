@@ -116,18 +116,43 @@ export class Logger {
     return Logger.instance;
   }
 
+  /**
+   * Logs a debug-level message. Useful for verbose diagnostic information.
+   *
+   * @param message - Human-readable log message
+   * @param data - Optional structured metadata to attach to the log entry
+   */
   debug(message: string, data?: Record<string, unknown>): void {
     winstonLogger.debug(message, data);
   }
 
+  /**
+   * Logs an informational message for normal application events.
+   *
+   * @param message - Human-readable log message
+   * @param data - Optional structured metadata to attach to the log entry
+   */
   info(message: string, data?: Record<string, unknown>): void {
     winstonLogger.info(message, data);
   }
 
+  /**
+   * Logs a warning message for non-critical unexpected conditions.
+   *
+   * @param message - Human-readable log message
+   * @param data - Optional structured metadata to attach to the log entry
+   */
   warn(message: string, data?: Record<string, unknown>): void {
     winstonLogger.warn(message, data);
   }
 
+  /**
+   * Logs an error-level message. Accepts a raw `Error` object and automatically
+   * extracts `message` and `stack` into the log metadata.
+   *
+   * @param message - Human-readable description of the error context
+   * @param error - Optional error value; `Error` instances are serialised automatically
+   */
   error(message: string, error?: unknown): void {
     if (error instanceof Error) {
       winstonLogger.error(message, { error: error.message, stack: error.stack });
@@ -136,7 +161,13 @@ export class Logger {
     }
   }
 
-  /** Returns a child logger with additional bound metadata (e.g. traceId, userId). */
+  /**
+   * Returns a child logger with additional bound metadata (e.g. `traceId`, `userId`).
+   * All entries written through the child automatically include the bound fields.
+   *
+   * @param meta - Key/value pairs to bind permanently to the child logger
+   * @returns A Winston child logger instance
+   */
   child(meta: Record<string, unknown>): winston.Logger {
     return winstonLogger.child(meta);
   }

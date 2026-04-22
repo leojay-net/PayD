@@ -1,3 +1,12 @@
+/**
+ * OpenTelemetry distributed tracing bootstrap.
+ *
+ * Call {@link initTracing} once at process startup — before importing
+ * `express` or `pg` — to enable auto-instrumentation of HTTP, Express,
+ * and PostgreSQL spans.
+ *
+ * Controlled by the `TRACING_ENABLED=true` environment variable.
+ */
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { resourceFromAttributes } from '@opentelemetry/resources';
@@ -16,6 +25,10 @@ const otlpEndpoint =
 const tracingEnabled = process.env.TRACING_ENABLED === 'true';
 const isDev = process.env.NODE_ENV !== 'production';
 
+/**
+ * The active {@link NodeSDK} instance, or `null` when tracing is disabled.
+ * Exposed for graceful-shutdown hooks and test introspection.
+ */
 let sdk: NodeSDK | null = null;
 
 /**
@@ -25,8 +38,14 @@ let sdk: NodeSDK | null = null;
  * In production (or when OTLP_ENDPOINT is set) spans are exported via OTLP/HTTP
  * to Jaeger (or any compatible collector such as the OpenTelemetry Collector).
  *
- * Call this function BEFORE importing express / pg to ensure auto-instrumentation
- * patches the libraries correctly.
+ * @example
+ * ```ts
+ * // At the very top of src/index.ts, before other imports:
+ * import { initTracing } from './utils/tracing.js';
+ * initTracing();
+ * ```
+ *
+ * @returns `void` — side-effects only (registers span processors and signal handlers)
  */
 export function initTracing(): void {
   if (!tracingEnabled) {
