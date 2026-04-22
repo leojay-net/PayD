@@ -543,11 +543,19 @@ function RecipientRow({
   );
 }
 
+interface VirtualizedRowData {
+  items: PayrollRecipientStatus[];
+  run: PayrollRunRecord;
+  onChainState?: OnChainBatchState;
+  retryingKey: string | null;
+  onRetry: (paymentIndex: number) => void;
+}
+
 const VirtualizedRecipientRow = ({
   index,
   style,
   ...data
-}: any) => {
+}: { index: number; style: React.CSSProperties } & VirtualizedRowData) => {
   const recipient = data.items[index];
   return (
     <RecipientRow
