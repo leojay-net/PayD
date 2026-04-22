@@ -1,4 +1,3 @@
-import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WalletProvider } from '../WalletProvider';
@@ -38,9 +37,9 @@ vi.mock('@creit.tech/stellar-wallets-kit', () => ({
     TESTNET: 'TESTNET',
     PUBLIC: 'PUBLIC',
   },
-  FreighterModule: class {},
-  xBullModule: class {},
-  LobstrModule: class {},
+  FreighterModule: class { },
+  xBullModule: class { },
+  LobstrModule: class { },
   FREIGHTER_ID: 'freighter',
   LOBSTR_ID: 'lobstr',
 }));

@@ -21,9 +21,11 @@ export class EmployeeController {
       });
       const employee = await employeeService.create(validatedData);
       res.status(201).json(employee);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: 'Validation Error', details: error.issues });
+      } else if (error.message?.includes('Invalid Stellar wallet address')) {
+        res.status(400).json({ error: 'Validation Error', details: [{ message: error.message }] });
       } else {
         console.error('Create Employee Error:', error);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -95,9 +97,11 @@ export class EmployeeController {
       }
 
       res.json(employee);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: 'Validation Error', details: error.issues });
+      } else if (error.message?.includes('Invalid Stellar wallet address')) {
+        res.status(400).json({ error: 'Validation Error', details: [{ message: error.message }] });
       } else {
         console.error('Update Employee Error:', error);
         res.status(500).json({ error: 'Internal Server Error' });
