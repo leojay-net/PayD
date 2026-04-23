@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import authenticateJWT from '../middlewares/auth.js';
 import { authorizeRoles, isolateOrganization } from '../middlewares/rbac.js';
 import { orgAuditService } from '../services/orgAuditService.js';
+import { apiErrorResponse, ErrorCodes } from '../utils/apiError.js';
 
 const router = Router();
 
@@ -21,7 +22,7 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const organizationId = req.user?.organizationId;
     if (!organizationId) {
-      return res.status(403).json({ error: 'User is not associated with an organization' });
+      return res.status(403).json(apiErrorResponse(ErrorCodes.FORBIDDEN, 'User is not associated with an organization'));
     }
 
     const limit = Math.min(parseInt(String(req.query.limit ?? '50'), 10) || 50, 200);
@@ -31,7 +32,7 @@ router.get('/', async (req: Request, res: Response) => {
     return res.status(200).json({ success: true, data: rows, total, limit, offset });
   } catch (err) {
     console.error('org-audit list error:', err);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json(apiErrorResponse(ErrorCodes.INTERNAL_ERROR, 'Internal Server Error'));
   }
 });
 

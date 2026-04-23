@@ -32,6 +32,8 @@ import webhookRoutes from '../webhook.routes.js';
 import notificationRoutes from '../notificationRoutes.js';
 import ratesRoutes from '../ratesRoutes.js';
 import stellarThrottlingRoutes from '../stellarThrottlingRoutes.js';
+import organizationRoutes from '../organizationRoutes.js';
+import orgAuditRoutes from '../orgAuditRoutes.js';
 
 const router = Router();
 
@@ -63,5 +65,7 @@ router.use('/webhooks', apiRateLimit(), webhookRoutes);
 router.use('/notifications', apiRateLimit(), notificationRoutes);
 router.use('/rates', dataRateLimit(), ratesRoutes);
 router.use('/stellar-throttling', apiRateLimit(), stellarThrottlingRoutes);
+router.use('/organizations', dataRateLimit(), organizationRoutes);
+router.use('/org-audit', dataRateLimit(), orgAuditRoutes);
 
 export default router;
